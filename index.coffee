@@ -4,7 +4,6 @@ on_drop = (element, callback) ->
     counter = 0
 
     update_counter = (num) ->
-        console.log num
         counter = num
         if counter > 0
             $element.addClass('dragover')
