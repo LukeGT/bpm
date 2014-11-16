@@ -41,16 +41,36 @@ get_channel_data = (file, callback) ->
 
 draw_waveform = (data) ->
 
-    detail = 2048
+    detail = 512
+    chunk = 32
 
-    context = $('canvas')[0].getContext '2d'
+    canvas = $('canvas')[0]
+    canvas.width = data.length/detail
+
+    context = canvas.getContext '2d'
+    context.clearRect 0, 0, canvas.width, canvas.height
     context.translate 0, 256
-    context.moveTo 0, 0
+    context.strokeStyle = 'rgba(0, 0, 0, 0.15)'
 
-    for a in [0..1024*detail]
-        context.lineTo a/detail, data[a]*256
+    index = 0
 
-    context.stroke()
+    interval = setInterval ->
+
+        if index >= data.length
+            clearInterval interval
+            return
+
+        context.beginPath()
+        context.moveTo index/detail, (data[index-1] ? 0) * 256
+
+        for a in [index .. index + detail * chunk]
+            context.lineTo a/detail, data[a]*256
+
+        index += detail * chunk
+
+        context.stroke()
+
+    , 0
 
 $ ->
 
