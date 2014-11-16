@@ -120,7 +120,7 @@ draw_frequencies = (data, colour, callback) ->
 
     context = canvas.getContext '2d'
     context.save()
-    context.translate 0, 256
+    context.translate 0, 512
     context.scale 1, -1
     context.strokeStyle = colour
 
@@ -131,29 +131,41 @@ draw_frequencies = (data, colour, callback) ->
 fft = (data, from, count, step = 1) ->
 
     if count == 1
-        return new Float32Array([ data[from] ])
+        return [ new Float32Array([ data[from] ]), new Float32Array([ 0 ]) ]
 
-    first_half = fft(data, from, count/2, step*2)
-    second_half = fft(data, from + step, count/2, step*2)
+    [ first_half_real, first_half_imag ] = fft(data, from, count/2, step*2)
+    [ second_half_real, second_half_imag ] = fft(data, from + step, count/2, step*2)
 
-    result = new Float32Array(count)
+    result_real = new Float32Array(count)
+    result_imag = new Float32Array(count)
 
     for k in [0...count/2]
-        twiddle = Math.cos(2 * Math.PI * k/count)
-        result[k] = first_half[k] + twiddle * second_half[k]
-        result[k+count/2] = first_half[k] - twiddle * second_half[k]
 
-    return result
+        twiddle = [ Math.cos(-2 * Math.PI * k/count), Math.sin(-2 * Math.PI * k/count) ]
+
+        result_real[k] = first_half_real[k] + twiddle[0] * second_half_real[k]
+        result_imag[k] = first_half_imag[k] + twiddle[1] * second_half_imag[k]
+
+        result_real[k+count/2] = first_half_real[k] - twiddle[0] * second_half_real[k]
+        result_imag[k+count/2] = first_half_imag[k] - twiddle[1] * second_half_imag[k]
+
+    return [ result_real, result_imag ]
 
 $ ->
 
     window.audio_context = new AudioContext()
 
-    lol = ( Math.sin(2*Math.PI*a/10) for a in [0...1024] )
-    lol_freq = fft(lol, 0, 1024)
-    draw_frequencies lol_freq, 'rgba(0, 0, 0, 0.15)', ->
-        console.log 'lol!'
-
+    # test = ( Math.sin(2*Math.PI*a/17) for a in [0...1024] )
+    # [ test_real, test_imag ] = fft(test, 0, 1024)
+    # test_freq = combine test_real, test_imag, (a, b) -> Math.sqrt a*a + b*b
+    # draw_frequencies test_freq, 'rgba(0, 0, 0, 0.15)', ->
+    #     console.log 'test!', Array.prototype.slice.call(test_freq).reduce (max, a, index) ->
+    #         if max[0] >= a
+    #             return max
+    #         else
+    #             return [ a, index ]
+    #     , [ 0, 0 ]
+      
     on_drop '#drop-zone', (event) ->
 
         for file in event.originalEvent.dataTransfer.files
@@ -175,14 +187,22 @@ $ ->
                     draw_waveform envelope, 'rgba(255, 0, 0, 0.15)', ->
 
                         console.log 'transforming...'
-                        transform = fft(envelope, 0, 1024*1024)
-                        console.log ( transform[t] for t in [1..120] )
-                        draw_frequencies transform, 'rgba(0, 0, 0, 0.15)', ->
+                        [ transform_real, transform_imag ] = fft(envelope, 0, 1024*1024)
 
-                            console.log 'untransforming...'
-                            untransform = fft(transform, 0, 1024*1024)
-                            console.log untransform
-                            draw_waveform untransform, 'rgba(0, 0, 255, 0.15)', ->
-                                console.log 'all done'
+                        console.log 'absoluting...'
+                        frequencies = combine transform_real, transform_imag, (a, b) -> Math.sqrt a*a + b*b
+
+                        console.log 'finding spike...'
+                        spike = Array.prototype.slice.call(frequencies).reduce (max, val, index) ->
+                            if max[0] >= val
+                                return max
+                            else
+                                return [ val, index ]
+                        , [ 0, 0 ]
+                        console.log 'spike:', spike
+                        console.log Array.prototype.slice.call(frequencies)[0..120]
+
+                        draw_frequencies frequencies, 'rgba(0, 0, 0, 0.15)', ->
+                            console.log 'all done'
 
         return undefined
