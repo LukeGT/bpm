@@ -1,4 +1,5 @@
 MAX_CANVAS_WIDTH = 32767
+ONE_ON_ROOT_TWO = 1/Math.sqrt(2)
 
 on_drop = (element, callback) ->
     
@@ -102,7 +103,7 @@ draw_line = (data, context, scale, detail, callback) ->
 
 draw_waveform = (data, colour, callback) ->
 
-    detail = 256
+    detail = 1
 
     canvas = $('#waveform canvas')[0]
     canvas_width = Math.min MAX_CANVAS_WIDTH, Math.floor(data.length/detail)
@@ -132,35 +133,48 @@ draw_frequencies = (data, colour, callback) ->
 
     draw_line data, context, 16, detail, callback
 
-fft = (data, from, count, step = 1) ->
+fft = (data, from, count) ->
+    
+    half_count = count/2
+
+    cache_real = new Float32Array(half_count)
+    cache_imag = new Float32Array(half_count)
+
+    for k in [0...half_count]
+        angle = -2 * Math.PI * k/count
+        cache_real[k] = Math.cos(angle)
+        cache_imag[k] = Math.sin(angle)
+
+    return fft_recurse data, from, count, 1, cache_real, cache_imag
+
+fft_recurse = (data, from, count, step = 1, cache_real, cache_imag) ->
 
     if count == 1
         return [ new Float32Array([ data[0][from] ]), new Float32Array([ data[1][from] ]) ]
 
     half_count = count/2
 
-    [ first_half_real, first_half_imag ] = fft(data, from, half_count, step*2)
-    [ second_half_real, second_half_imag ] = fft(data, from + step, half_count, step*2)
+    [ first_half_real, first_half_imag ] = fft_recurse(data, from, half_count, step*2, cache_real, cache_imag)
+    [ second_half_real, second_half_imag ] = fft_recurse(data, from + step, half_count, step*2, cache_real, cache_imag)
 
     result_real = new Float32Array(count)
     result_imag = new Float32Array(count)
 
     for k in [0...half_count]
 
-        angle = -2 * Math.PI * k/count
-        twiddle = [ Math.cos(angle), Math.sin(angle) ]
-        scale = 1/Math.sqrt(2)
+        real = cache_real[k*step]
+        imag = cache_imag[k*step]
 
-        rr = twiddle[0] * second_half_real[k]
-        ri = twiddle[0] * second_half_imag[k]
-        ir = twiddle[1] * second_half_real[k]
-        ii = twiddle[1] * second_half_imag[k]
+        rr = real * second_half_real[k]
+        ri = real * second_half_imag[k]
+        ir = imag * second_half_real[k]
+        ii = imag * second_half_imag[k]
 
-        result_real[k] = (first_half_real[k] + rr - ii) * scale
-        result_imag[k] = (first_half_imag[k] + ri + ir) * scale
+        result_real[k] = (first_half_real[k] + rr - ii) * ONE_ON_ROOT_TWO
+        result_imag[k] = (first_half_imag[k] + ri + ir) * ONE_ON_ROOT_TWO
 
-        result_real[k+half_count] = (first_half_real[k] - (rr - ii)) * scale
-        result_imag[k+half_count] = (first_half_imag[k] - (ri + ir)) * scale
+        result_real[k+half_count] = (first_half_real[k] - (rr - ii)) * ONE_ON_ROOT_TWO
+        result_imag[k+half_count] = (first_half_imag[k] - (ri + ir)) * ONE_ON_ROOT_TWO
 
     return [ result_real, result_imag ]
 
@@ -176,7 +190,7 @@ $ ->
 
     window.audio_context = new AudioContext()
 
-    test = ( (if a == 0 then 1 else Math.sin(2*Math.PI*a/8)/(2*Math.PI*a/8)) for a in [-512*1024...512*1024] )
+    test = ( (if a == 0 then 1 else Math.sin(2*Math.PI*a/8)/(2*Math.PI*a/8)) for a in [-512...512] )
     # test = [ 0, 1, 0, -1, 0, 1, 0, -1 ]
 
     draw_waveform test, 'rgba(0, 0, 0, 0.5)', ->
