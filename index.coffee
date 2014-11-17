@@ -202,4 +202,4 @@ $ ->
                         draw_frequencies frequencies, 'rgba(0, 0, 0, 0.15)', ->
                             console.log 'all done'
 
-        return undefined
+        return
