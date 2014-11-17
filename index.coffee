@@ -72,7 +72,6 @@ combine = (data1, data2, func) ->
 draw_line = (data, context, scale, detail, callback) ->
 
     chunk = 32
-
     index = 0
 
     interval = setInterval ->
@@ -125,8 +124,6 @@ draw_frequencies = (data, colour, callback) ->
     context.strokeStyle = colour
 
     draw_line data, context, 1, detail, callback
-
-# TODO: Actually use imaginary numbers, and calculate the absolute value of each result at the end... FUCK
 
 fft = (data, from, count, step = 1) ->
 
