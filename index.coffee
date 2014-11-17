@@ -67,6 +67,15 @@ combine = (data1, data2, func) ->
 
     return result
 
+map = (data, func) ->
+    
+    result = new Float32Array(data.length)
+
+    for d, i in data
+        result[i] = func d
+
+    return result
+
 draw_line = (data, context, scale, detail, callback) ->
 
     chunk = 32
@@ -109,7 +118,7 @@ draw_waveform = (data, colour, callback) ->
 
 draw_frequencies = (data, colour, callback) ->
     
-    detail = 1/8
+    detail = 0.125
 
     canvas = $('#frequencies canvas')[0]
     canvas_width = Math.min MAX_CANVAS_WIDTH, Math.floor(data.length/detail)
@@ -121,47 +130,80 @@ draw_frequencies = (data, colour, callback) ->
     context.scale 1, -1
     context.strokeStyle = colour
 
-    draw_line data, context, 0.1, detail, callback
+    draw_line data, context, 16, detail, callback
 
 fft = (data, from, count, step = 1) ->
 
     if count == 1
         return [ new Float32Array([ data[0][from] ]), new Float32Array([ data[1][from] ]) ]
 
-    [ first_half_real, first_half_imag ] = fft(data, from, count/2, step*2)
-    [ second_half_real, second_half_imag ] = fft(data, from + step, count/2, step*2)
+    half_count = count/2
+
+    [ first_half_real, first_half_imag ] = fft(data, from, half_count, step*2)
+    [ second_half_real, second_half_imag ] = fft(data, from + step, half_count, step*2)
 
     result_real = new Float32Array(count)
     result_imag = new Float32Array(count)
 
-    for k in [0...count/2]
+    for k in [0...half_count]
 
-        twiddle = [ Math.cos(-2 * Math.PI * k/count), Math.sin(-2 * Math.PI * k/count) ]
+        angle = -2 * Math.PI * k/count
+        twiddle = [ Math.cos(angle), Math.sin(angle) ]
+        scale = 1/Math.sqrt(2)
 
-        result_real[k] = first_half_real[k] + twiddle[0] * second_half_real[k]
-        result_imag[k] = first_half_imag[k] + twiddle[1] * second_half_imag[k]
+        rr = twiddle[0] * second_half_real[k]
+        ri = twiddle[0] * second_half_imag[k]
+        ir = twiddle[1] * second_half_real[k]
+        ii = twiddle[1] * second_half_imag[k]
 
-        result_real[k+count/2] = first_half_real[k] - twiddle[0] * second_half_real[k]
-        result_imag[k+count/2] = first_half_imag[k] - twiddle[1] * second_half_imag[k]
+        result_real[k] = (first_half_real[k] + rr - ii) * scale
+        result_imag[k] = (first_half_imag[k] + ri + ir) * scale
+
+        result_real[k+half_count] = (first_half_real[k] - (rr - ii)) * scale
+        result_imag[k+half_count] = (first_half_imag[k] - (ri + ir)) * scale
 
     return [ result_real, result_imag ]
 
 imaginary = (data) -> [ data, new Float32Array(data.length) ]
 
+time = (message, func) ->
+    console.log "Starting #{message}"
+    begin = Date.now()
+    func()
+    console.log "#{message} took #{Date.now() - begin}"
+
 $ ->
 
     window.audio_context = new AudioContext()
 
-    # test = ( Math.sin(2*Math.PI*a/17) for a in [0...1024] )
-    # [ test_real, test_imag ] = fft(test, 0, 1024)
-    # test_freq = combine test_real, test_imag, (a, b) -> Math.sqrt a*a + b*b
-    # draw_frequencies test_freq, 'rgba(0, 0, 0, 0.15)', ->
-    #     console.log 'test!', Array.prototype.slice.call(test_freq).reduce (max, a, index) ->
-    #         if max[0] >= a
-    #             return max
-    #         else
-    #             return [ a, index ]
-    #     , [ 0, 0 ]
+    test = ( (if a == 0 then 1 else Math.sin(2*Math.PI*a/8)/(2*Math.PI*a/8)) for a in [-512*1024...512*1024] )
+    # test = [ 0, 1, 0, -1, 0, 1, 0, -1 ]
+
+    draw_waveform test, 'rgba(0, 0, 0, 0.5)', ->
+
+        [ test_real, test_imag, test_freq ] = []
+
+        time 'fft transform', ->
+            [ test_real, test_imag ] = fft(imaginary(test), 0, test.length)
+
+        time 'modulus', ->
+            test_freq = combine test_real, test_imag, (a, b) -> Math.sqrt a*a + b*b
+
+        draw_frequencies test_freq, 'rgba(0, 0, 0, 0.5)', ->
+
+            max = Array.prototype.slice.call(test_freq).reduce (max, a, index) ->
+                if max[0] >= a
+                    return max
+                else
+                    return [ a, index ]
+            , [ 0, 0 ]
+            console.log 'max:', max
+
+            time 'fft transform 2', ->
+                [ test_imag, test_real ] = fft([ test_imag, test_real ], 0, test.length)
+
+            draw_waveform test_real, 'rgba(255, 0, 0, 0.5)', ->
+                console.log 'done'
       
     on_drop '#drop-zone', (event) ->
 
@@ -190,16 +232,17 @@ $ ->
                         frequencies = combine transform_real, transform_imag, (a, b) -> Math.sqrt a*a + b*b
 
                         console.log 'finding spike...'
-                        spike = Array.prototype.slice.call(frequencies).reduce (max, val, index) ->
+                        sample = Array.prototype.slice.call(frequencies)[12..120]
+                        spike = sample.reduce (max, val, index) ->
                             if max[0] >= val
                                 return max
                             else
-                                return [ val, index ]
+                                return [ val, index + 12 ]
                         , [ 0, 0 ]
                         console.log 'spike:', spike
-                        console.log Array.prototype.slice.call(frequencies)[0..120]
+                        console.log sample
 
-                        draw_frequencies frequencies, 'rgba(0, 0, 0, 0.15)', ->
+                        draw_frequencies frequencies, 'rgba(0, 0, 0, 1)', ->
                             console.log 'all done'
 
         return
