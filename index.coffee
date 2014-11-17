@@ -75,7 +75,7 @@ draw_line = (data, context, scale, detail, callback) ->
     interval = setInterval ->
 
         context.beginPath()
-        context.moveTo index/detail, (data[index-1] ? 0) * scale
+        context.moveTo (index-1)/detail, (data[index-1] ? 0) * scale
 
         for a in [index .. index + detail * chunk]
             context.lineTo a/detail, data[a] * scale
@@ -109,7 +109,7 @@ draw_waveform = (data, colour, callback) ->
 
 draw_frequencies = (data, colour, callback) ->
     
-    detail = 1
+    detail = 1/8
 
     canvas = $('#frequencies canvas')[0]
     canvas_width = Math.min MAX_CANVAS_WIDTH, Math.floor(data.length/detail)
@@ -121,7 +121,7 @@ draw_frequencies = (data, colour, callback) ->
     context.scale 1, -1
     context.strokeStyle = colour
 
-    draw_line data, context, 1, detail, callback
+    draw_line data, context, 0.1, detail, callback
 
 fft = (data, from, count, step = 1) ->
 
