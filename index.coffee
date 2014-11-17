@@ -46,11 +46,9 @@ convolve = (data, func, range = 64) ->
     response = for a in [-range...range]
         func(a) ? 0
     
-    convolution = new Float32Array(data.length)
+    convolution = new Float32Array(data.length) # Initialises to 0
     
     for signal, signal_index in data
-
-        convolution[signal_index] = 0
 
         continue if signal_index - range < 0
         continue if signal_index + range >= data.length
@@ -128,7 +126,7 @@ draw_frequencies = (data, colour, callback) ->
 fft = (data, from, count, step = 1) ->
 
     if count == 1
-        return [ new Float32Array([ data[from] ]), new Float32Array([ 0 ]) ]
+        return [ new Float32Array([ data[0][from] ]), new Float32Array([ data[1][from] ]) ]
 
     [ first_half_real, first_half_imag ] = fft(data, from, count/2, step*2)
     [ second_half_real, second_half_imag ] = fft(data, from + step, count/2, step*2)
@@ -147,6 +145,8 @@ fft = (data, from, count, step = 1) ->
         result_imag[k+count/2] = first_half_imag[k] - twiddle[1] * second_half_imag[k]
 
     return [ result_real, result_imag ]
+
+imaginary = (data) -> [ data, new Float32Array(data.length) ]
 
 $ ->
 
@@ -184,7 +184,7 @@ $ ->
                     draw_waveform envelope, 'rgba(255, 0, 0, 0.15)', ->
 
                         console.log 'transforming...'
-                        [ transform_real, transform_imag ] = fft(envelope, 0, 1024*1024)
+                        [ transform_real, transform_imag ] = fft(imaginary(envelope), 0, 1024*1024)
 
                         console.log 'absoluting...'
                         frequencies = combine transform_real, transform_imag, (a, b) -> Math.sqrt a*a + b*b
