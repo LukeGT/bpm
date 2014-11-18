@@ -307,42 +307,58 @@ $ ->
 
     on_drop '#drop-zone', (event) ->
 
+        draw_queue = begin()
+
         for file in event.originalEvent.dataTransfer.files
 
-            get_channel_data file, (data) ->
+            [ data, convolution, envelope, transform_real, transform_imag, frequencies ] = []
 
-                draw_waveform data, 'rgba(0, 0, 0, 0.15)', ->
+            begin().then ->
+                get_channel_data file, @callback
 
-                    console.log 'convolving...'
-                    convolution = convolve data, (x) ->
-                        if x % 2 == 0
-                            0
-                        else
-                            1/(Math.PI*x)
+            .then_do (channel_data) ->
+                data = channel_data
 
-                    console.log 'enveloping...'
-                    envelope = combine data, convolution, (a, b) -> Math.sqrt a*a + b*b
+            .then_do ->
+                draw_queue = draw_queue.then ->
+                    draw_waveform data, 'rgba(0, 0, 0, 0.15)', @callback
 
-                    draw_waveform envelope, 'rgba(255, 0, 0, 0.15)', ->
+            .then_do ->
+                console.log 'convolving...'
+                convolution = convolve data, (x) -> if x % 2 == 0 then 0 else 1/(Math.PI*x)
 
-                        console.log 'transforming...'
-                        [ transform_real, transform_imag ] = fft(imaginary(envelope), 0, 1024*1024)
+            .then_do ->
+                console.log 'enveloping...'
+                envelope = combine data, convolution, (a, b) -> Math.sqrt a*a + b*b
 
-                        console.log 'absoluting...'
-                        frequencies = combine transform_real, transform_imag, (a, b) -> Math.sqrt a*a + b*b
+            .then_do ->
+                draw_queue = draw_queue.then ->
+                    draw_waveform envelope, 'rgba(255, 0, 0, 0.15)', @callback
 
-                        console.log 'finding spike...'
-                        sample = Array.prototype.slice.call(frequencies)[12..120]
-                        spike = sample.reduce (max, val, index) ->
-                            if max[0] >= val
-                                return max
-                            else
-                                return [ val, index + 12 ]
-                        , [ 0, 0 ]
-                        console.log 'spike:', spike
-                        console.log sample
+            .then_do ->
+                console.log 'transforming...'
+                [ transform_real, transform_imag ] = fft(imaginary(envelope), 1024*1024, 1024*1024)
 
-                        draw_frequencies frequencies, 'rgba(0, 0, 0, 1)', ->
-                            console.log 'all done'
+            .then_do ->
+                console.log 'absoluting...'
+                frequencies = combine transform_real, transform_imag, (a, b) -> Math.sqrt a*a + b*b
+
+            .then_do ->
+                console.log 'finding spike...'
+                sample = Array.prototype.slice.call(frequencies)[0..120]
+                spike = sample[12..].reduce (max, val, index) ->
+                    if max[0] >= val
+                        return max
+                    else
+                        return [ val, index + 12 ]
+                , [ 0, 0 ]
+                console.log 'spike:', spike
+                console.log sample
+
+            .then_do ->
+                draw_queue = draw_queue.then ->
+                    draw_frequencies frequencies, 'rgba(0, 0, 0, 1)', @callback
+
+            .then_do -> draw_queue.then_do -> console.log 'all done'
 
         return
