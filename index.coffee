@@ -47,7 +47,7 @@ get_channel_data = (file, callback) ->
         console.log 'decoding file', file
         window.audio_context.decodeAudioData reader.result, (buffer) ->
             console.log 'done', buffer
-            callback buffer.getChannelData(0)
+            callback buffer.getChannelData(0), buffer
 
 # Signal processing functions
 
@@ -93,6 +93,19 @@ map = (data, func) ->
 
     return result
 
+# Re-represents the same signal with less samples
+
+desample = (data, ratio = 2) ->
+    
+    # TODO: Remove problematic frequencies from the signal
+
+    result = new Float32Array(data.length/ratio)
+
+    for a in [0...result.length]
+        result[a] = data[Math.floor a*ratio]
+
+    return result
+
 # Some common lambdas used in the above functions
 
 hilbert_transform = (x) -> if x % 2 == 0 then 0 else 1/(Math.PI*x)
@@ -104,7 +117,7 @@ modulus = (a, b) -> Math.sqrt a*a + b*b
 
 draw_line = (data, context, scale, detail, callback) ->
 
-    chunk = 32
+    chunk = 128
     index = 0
 
     interval = setInterval ->
@@ -112,12 +125,12 @@ draw_line = (data, context, scale, detail, callback) ->
         context.beginPath()
         context.moveTo (index-1)/detail, (data[index-1] ? 0) * scale
 
-        for a in [index .. index + detail * chunk]
+        for a in [index .. Math.floor index + detail * chunk]
             context.lineTo a/detail, data[a] * scale
 
         context.stroke()
 
-        index += detail * chunk
+        index += Math.floor detail * chunk
 
         if index >= data.length or index/detail > MAX_CANVAS_WIDTH
             clearInterval interval
@@ -150,9 +163,9 @@ draw_waveform = (data, { colour, detail, scale }, callback) ->
 
 draw_frequencies = (data, { colour, detail, scale }, callback) ->
 
-    colour = '#000'
-    detail = 0.125
-    scale = 16
+    colour ?= '#000'
+    detail ?= 1
+    scale ?= 16
 
     canvas = $('#frequencies canvas')[0]
     canvas_width = Math.min MAX_CANVAS_WIDTH, Math.floor(data.length/detail)
@@ -373,13 +386,18 @@ $ ->
 
         for file in event.originalEvent.dataTransfer.files
 
-            [ data, convolution, envelope, transform_real, transform_imag, frequencies ] = []
+            [ data, downsample, sample_rate, convolution, envelope, transform_real, transform_imag, frequencies, bpm ] = []
+
+            transform_size = 1024*1024
 
             begin().then ->
                 get_channel_data file, @callback
 
-            .then_do (channel_data) ->
-                data = channel_data
+            .then_do (channel_data, buffer) ->
+                downsample = Math.floor channel_data.length/transform_size
+                console.log 'Downsampling by factor of', downsample
+                data = desample channel_data, downsample
+                sample_rate = buffer.sampleRate
 
             .then_do ->
                 draw_queue = draw_queue.then ->
@@ -399,7 +417,7 @@ $ ->
 
             .then_do ->
                 console.log 'transforming...'
-                [ transform_real, transform_imag ] = fft(imaginary(envelope), 1024*1024, 1024*1024)
+                [ transform_real, transform_imag ] = fft(imaginary(envelope), 0, transform_size)
 
             .then_do ->
                 console.log 'absoluting...'
@@ -407,19 +425,46 @@ $ ->
 
             .then_do ->
                 console.log 'finding spike...'
-                sample = Array.prototype.slice.call(frequencies)[0..120]
-                spike = sample[12..].reduce (max, val, index) ->
-                    if max[0] >= val
+
+                ratio = transform_size/60/sample_rate * downsample
+                min = Math.floor 30 * ratio
+                max = Math.floor 300 * ratio
+                echoes = 4 # TODO: Try different echoes, guess time signature PAH POW
+
+                sample = Array.prototype.slice.call(frequencies)[..max]
+
+                spike = sample.reduce (max, val, index) ->
+
+                    return max if index < min
+
+                    sum = ( sample[Math.floor index*a/echoes] for a in [1..echoes] ).reduce (a, b) -> a + b
+
+                    if max[0] >= sum
                         return max
                     else
-                        return [ val, index + 12 ]
-                , [ 0, 0 ]
-                console.log 'spike:', spike
-                console.log sample
+                        return [ sum, index ]
 
-            .then_do ->
+                , [ 0, 0 ]
+
+                bpm = spike[1]/ratio
+
+                console.log 'spike:', spike
+                console.log 'BPM:', bpm
+
                 draw_queue = draw_queue.then ->
-                    draw_frequencies frequencies, colour: 'rgba(0, 0, 0, 1)', @callback
+                    draw_frequencies frequencies, colour: 'rgba(0, 0, 0, 1)', detail: downsample/8, @callback
+
+                .then_do ->
+
+                    canvas = $('#frequencies canvas')[0]
+                    context = canvas.getContext '2d'
+                    context.strokeStyle = 'rgba(255, 0, 0, 0.15)'
+
+                    for a in [1..echoes]
+                        context.beginPath()
+                        context.moveTo a/echoes*spike[1]*8/downsample, -512
+                        context.lineTo a/echoes*spike[1]*8/downsample, 512
+                        context.stroke()
 
             .then_do -> draw_queue.then_do -> console.log 'all done'
 
