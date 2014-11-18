@@ -209,25 +209,74 @@ time = (message, func) ->
     func()
     console.log "#{message} took #{Date.now() - begin}"
 
+tick = (func) -> setTimeout func, 0
+
+call_listener = (listener) -> tick ->
+    listener.apply {
+        callback: -> listener.promise.do.apply this, arguments
+    }, arguments
+
+promise = ->
+
+    done = false
+    listeners = []
+    
+    return {
+
+        then: (listener) ->
+
+            listener.promise = promise()
+
+            if done
+                call_listener listener
+            else
+                listeners.push listener
+
+            return listener.promise
+
+        then_do: (listener) ->
+            @then(listener).do()
+
+        do: ->
+
+            for listener in listeners
+                call_listener listener
+
+            listeners = []
+            done = true
+
+            return this
+    }
+
+begin = -> promise().do()
+
 $ ->
 
     window.audio_context = new AudioContext()
 
-    test = ( (if a == 0 then 1 else Math.sin(2*Math.PI*a/8)/(2*Math.PI*a/8)) for a in [-512...512] )
+    test = ( (if a == 0 then 1 else Math.sin(2*Math.PI*a/8)/(2*Math.PI*a/8)) for a in [-512*1024...512*1024] )
+    # test = ( (if a == 0 then 1 else Math.sin(2*Math.PI*a/8)/(2*Math.PI*a/8)) for a in [-512...512] )
     # test = [ 0, 1, 0, -1, 0, 1, 0, -1 ]
 
-    draw_waveform test, 'rgba(0, 0, 0, 0.5)', ->
+    wave_draw = begin().then ->
+        draw_waveform test, 'rgba(0, 0, 0, 0.5)', @callback
 
-        [ test_real, test_imag, test_freq ] = []
+    [ test_real, test_imag, test_freq ] = []
 
+    begin().then_do ->
         time 'fft transform', ->
             [ test_real, test_imag ] = fft(imaginary(test), 0, test.length)
 
+    .then_do ->
         time 'modulus', ->
             test_freq = combine test_real, test_imag, (a, b) -> Math.sqrt a*a + b*b
 
-        draw_frequencies test_freq, 'rgba(0, 0, 0, 0.5)', ->
+    .then_do ->
+        wave_draw = wave_draw.then ->
+            draw_frequencies test_freq, 'rgba(0, 0, 0, 0.5)', @callback
 
+    .then_do ->
+        time 'find max', ->
             max = Array.prototype.slice.call(test_freq).reduce (max, a, index) ->
                 if max[0] >= a
                     return max
@@ -236,12 +285,16 @@ $ ->
             , [ 0, 0 ]
             console.log 'max:', max
 
-            time 'fft transform 2', ->
-                [ test_imag, test_real ] = fft([ test_imag, test_real ], 0, test.length)
+    .then_do ->
+        time 'fft transform 2', ->
+            [ test_imag, test_real ] = fft([ test_imag, test_real ], 0, test.length)
 
-            draw_waveform test_real, 'rgba(255, 0, 0, 0.5)', ->
-                console.log 'done'
-      
+    .then_do ->
+        wave_draw = wave_draw.then ->
+            draw_waveform test_real, 'rgba(255, 0, 0, 0.5)', @callback
+
+    .then_do -> wave_draw.then_do -> console.log 'done'
+
     on_drop '#drop-zone', (event) ->
 
         for file in event.originalEvent.dataTransfer.files
