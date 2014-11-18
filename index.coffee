@@ -106,12 +106,47 @@ desample = (data, ratio = 2) ->
 
     return result
 
+find_best_harmonic = (data, echoes, min, max) ->
+    
+    best = data[..max].reduce (max, value, index) ->
+
+        return max if index < min
+
+        sum = 0
+
+        for a in [1..echoes]
+            sum += data[Math.floor index*a/echoes]
+
+        sum /= echoes
+
+        if max.score >= sum
+            return max
+        else
+            return {
+                position: index
+                score: sum
+                echoes: echoes
+            }
+
+    , position: 0, score: 0, echoes: 0
+
+    #best.likelihood = data[best.position*2]
+    best.likelihood = Math.max.apply this, data[best.position*2-1..best.position*2+1]
+
+    return best
+
 # Some common lambdas used in the above functions
 
 hilbert_transform = (x) -> if x % 2 == 0 then 0 else 1/(Math.PI*x)
 modulus = (a, b) -> Math.sqrt a*a + b*b
+argument = (a, b) -> Math.atan2 b, a
 
 # Drawing functions
+
+clear_canvases = ->
+    
+    for canvas in $('canvas')
+        canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height)
 
 # Used by the higher level drawing functions below
 
@@ -322,13 +357,18 @@ begin = -> promise().do()
 test = ->
 
     # test = ( (if a == 0 then 1 else Math.sin(2*Math.PI*a/8)/(2*Math.PI*a/8)) for a in [-512*1024...512*1024] )
-    test = ( (if a == 0 then 1 else Math.sin(2*Math.PI*a/8)/(2*Math.PI*a/8)) for a in [-512...512] )
+    # test = ( (if a == 0 then 1 else Math.sin(2*Math.PI*a/8)/(2*Math.PI*a/8)) for a in [-512...512] )
     # test = [ 0, 1, 0, -1, 0, 1, 0, -1 ]
+    test = ( Math.sin(2*Math.PI*a/128) * Math.sin(2*Math.PI*a/4) for a in [-512...512] ) 
+
+    transform_size = test.length
+    sample_rate = 512
+    downsample = 1
 
     wave_draw = begin().then ->
         draw_waveform test, colour: 'rgba(0, 0, 0, 0.5)', detail: 0.5, @callback
 
-    [ convolution, envelope, test_real, test_imag, test_freq ] = []
+    [ convolution, envelope, test_real, test_imag, test_freq, transform_real, transform_imag, frequencies, phases ] = []
 
     begin().then_do ->
         time 'convolving...', ->
@@ -343,6 +383,65 @@ test = ->
             draw_waveform envelope, colour: 'rgba(0, 0, 255, 0.5', detail: 0.5, @callback
     
     .then_do ->
+        console.log 'transforming...'
+        [ transform_real, transform_imag ] = fft(imaginary(envelope), 0, transform_size)
+
+    .then_do ->
+        console.log 'absoluting...'
+        frequencies = combine transform_real, transform_imag, modulus
+        phases = combine transform_real, transform_imag, argument
+        phases = map phases, (a) -> a + 16
+
+    .then_do ->
+        console.log 'finding spike...'
+
+        ratio = transform_size/60/sample_rate * downsample
+        min = Math.floor 200 * ratio
+        max = Math.floor 300 * ratio
+        echoes = 4 # TODO: Try different echoes, guess time signature PAH POW
+
+        sample = Array.prototype.slice.call(frequencies)[..max]
+
+        spike = sample.reduce (max, val, index) ->
+
+            return max if index < min
+
+            sum = ( sample[Math.floor index*a/echoes] for a in [1..echoes] ).reduce (a, b) -> a + b
+            sum /= echoes
+
+            if max[0] >= sum
+                return max
+            else
+                return [ sum, index ]
+
+        , [ 0, 0 ]
+
+        bpm = spike[1]/ratio
+
+        console.log 'spike:', spike
+        console.log 'BPM:', bpm
+
+        spike_phases = ( phases[Math.floor spike[1]*a/echoes]*echoes % Math.PI for a in [1..echoes] )
+        console.log 'phases:', spike_phases
+
+        wave_draw = wave_draw.then ->
+            draw_frequencies frequencies, colour: 'rgba(0, 0, 0, 1)', detail: downsample/8, @callback
+        .then ->
+            draw_frequencies phases, colour: 'rgba(0, 0, 255, 0.15)', detail: downsample/8, @callback
+
+        .then_do ->
+
+            canvas = $('#frequencies canvas')[0]
+            context = canvas.getContext '2d'
+            context.strokeStyle = 'rgba(255, 0, 0, 0.15)'
+
+            for a in [1..echoes]
+                context.beginPath()
+                context.moveTo a/echoes*spike[1]*8/downsample, -512
+                context.lineTo a/echoes*spike[1]*8/downsample, 512
+                context.stroke()
+
+    .then_do ->
         time 'fft transform', ->
             [ test_real, test_imag ] = fft(imaginary(test), 0, test.length)
 
@@ -350,9 +449,9 @@ test = ->
         time 'modulus', ->
             test_freq = combine test_real, test_imag, modulus
 
-    .then_do ->
-        wave_draw = wave_draw.then ->
-            draw_frequencies test_freq, colour: 'rgba(0, 0, 0, 0.5)', detail: 0.5, @callback
+    #.then_do ->
+    #    wave_draw = wave_draw.then ->
+    #        draw_frequencies test_freq, colour: 'rgba(0, 0, 0, 0.5)', detail: 0.5, @callback
 
     .then_do ->
         time 'find max', ->
@@ -378,15 +477,17 @@ $ ->
 
     window.audio_context = new AudioContext()
 
-    test()
+    # test()
 
     on_drop '#drop-zone', (event) ->
+
+        clear_canvases()
 
         draw_queue = begin()
 
         for file in event.originalEvent.dataTransfer.files
 
-            [ data, downsample, sample_rate, convolution, envelope, transform_real, transform_imag, frequencies, bpm ] = []
+            [ data, downsample, sample_rate, convolution, envelope, transform_real, transform_imag, frequencies, phases, bpm ] = []
 
             transform_size = 1024*1024
 
@@ -401,7 +502,7 @@ $ ->
 
             .then_do ->
                 draw_queue = draw_queue.then ->
-                    draw_waveform data, colour: 'rgba(0, 0, 0, 0.15)', @callback
+                    draw_waveform data, colour: 'rgba(0, 0, 0, 0.15)', detail: data.length/MAX_CANVAS_WIDTH, @callback
 
             .then_do ->
                 console.log 'convolving...'
@@ -413,7 +514,7 @@ $ ->
 
             .then_do ->
                 draw_queue = draw_queue.then ->
-                    draw_waveform envelope, colour: 'rgba(255, 0, 0, 0.15)', @callback
+                    draw_waveform envelope, colour: 'rgba(255, 0, 0, 0.15)', detail: data.length/MAX_CANVAS_WIDTH, @callback
 
             .then_do ->
                 console.log 'transforming...'
@@ -422,37 +523,38 @@ $ ->
             .then_do ->
                 console.log 'absoluting...'
                 frequencies = combine transform_real, transform_imag, modulus
+                phases = combine transform_real, transform_imag, argument
 
             .then_do ->
-                console.log 'finding spike...'
+                console.log 'finding best harmonic...'
 
                 ratio = transform_size/60/sample_rate * downsample
                 min = Math.floor 30 * ratio
-                max = Math.floor 300 * ratio
-                echoes = 4 # TODO: Try different echoes, guess time signature PAH POW
+                max = Math.floor 200 * ratio
 
-                sample = Array.prototype.slice.call(frequencies)[..max]
+                slicable_frequencies = Array.prototype.slice.call(frequencies)
 
-                spike = sample.reduce (max, val, index) ->
-
-                    return max if index < min
-
-                    sum = ( sample[Math.floor index*a/echoes] for a in [1..echoes] ).reduce (a, b) -> a + b
-
-                    if max[0] >= sum
-                        return max
+                { echoes, position } = (find_best_harmonic(slicable_frequencies, echoes, min, max) for echoes in [3..23]).reduce (best, next, index) ->
+                    console.log next.position/ratio, next
+                    if next.likelihood > best.likelihood
+                        return next
+                    else if next.likelihood == best.likelihood and next.score > best.score
+                        return next
                     else
-                        return [ sum, index ]
+                        return best
+                , score: 0, likelihood: 0
 
-                , [ 0, 0 ]
+                bpm = position/ratio
 
-                bpm = spike[1]/ratio
-
-                console.log 'spike:', spike
+                console.log 'harmonic found:', echoes, position
                 console.log 'BPM:', bpm
+                console.log "Time Signature: #{echoes}/4"
 
                 draw_queue = draw_queue.then ->
                     draw_frequencies frequencies, colour: 'rgba(0, 0, 0, 1)', detail: downsample/8, @callback
+
+                .then ->
+                    draw_frequencies phases, colour: 'rgba(0, 0, 255, 0.15)', detail: downsample/8, @callback
 
                 .then_do ->
 
@@ -462,8 +564,8 @@ $ ->
 
                     for a in [1..echoes]
                         context.beginPath()
-                        context.moveTo a/echoes*spike[1]*8/downsample, -512
-                        context.lineTo a/echoes*spike[1]*8/downsample, 512
+                        context.moveTo a/echoes*position*8/downsample, -512
+                        context.lineTo a/echoes*position*8/downsample, 512
                         context.stroke()
 
             .then_do -> draw_queue.then_do -> console.log 'all done'
