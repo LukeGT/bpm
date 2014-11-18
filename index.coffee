@@ -1,6 +1,10 @@
 MAX_CANVAS_WIDTH = 32767
 ONE_ON_ROOT_TWO = 1/Math.sqrt(2)
 
+# Drag and drop helper. Calls the callback whenever the element has 
+# something dropped onto it, and adds a class 'dragover' to the element
+# when something is being dragged over the top of it
+
 on_drop = (element, callback) ->
     
     $element = $(element)
@@ -31,6 +35,9 @@ on_drop = (element, callback) ->
         update_counter 0
         callback.apply this, arguments
 
+# Audio loading helper. Takes in an audio file, and calls back with the 
+# raw signal in the form of a Float32Array
+
 get_channel_data = (file, callback) ->
     
     reader = new FileReader()
@@ -41,6 +48,11 @@ get_channel_data = (file, callback) ->
         window.audio_context.decodeAudioData reader.result, (buffer) ->
             console.log 'done', buffer
             callback buffer.getChannelData(0)
+
+# Signal processing functions
+
+# Convolve a signal with an FIR function.  'range' adjusts the size of
+# the response.  The default is quite low.  
 
 convolve = (data, func, range = 8) ->
     
@@ -59,6 +71,8 @@ convolve = (data, func, range = 8) ->
 
     return convolution
 
+# Combines two signals together using the given function
+
 combine = (data1, data2, func) ->
 
     result = new Float32Array(data1.length)
@@ -68,6 +82,8 @@ combine = (data1, data2, func) ->
 
     return result
 
+# Applies a given function on the signal, returning the new result
+
 map = (data, func) ->
     
     result = new Float32Array(data.length)
@@ -76,6 +92,15 @@ map = (data, func) ->
         result[i] = func d
 
     return result
+
+# Some common lambdas used in the above functions
+
+hilbert_transform = (x) -> if x % 2 == 0 then 0 else 1/(Math.PI*x)
+modulus = (a, b) -> Math.sqrt a*a + b*b
+
+# Drawing functions
+
+# Used by the higher level drawing functions below
 
 draw_line = (data, context, scale, detail, callback) ->
 
@@ -101,6 +126,8 @@ draw_line = (data, context, scale, detail, callback) ->
 
     , 0
 
+# Draw a waveform (top canvas)
+
 draw_waveform = (data, { colour, detail, scale }, callback) ->
 
     colour ?= '#000'
@@ -118,6 +145,8 @@ draw_waveform = (data, { colour, detail, scale }, callback) ->
     context.strokeStyle = colour
 
     draw_line data, context, scale, detail, callback
+
+# Draw a frequency function (bottom canvas)
 
 draw_frequencies = (data, { colour, detail, scale }, callback) ->
 
@@ -205,7 +234,11 @@ fft_recurse = (data, from, count, step = 1, cache_real, cache_imag) ->
 
     return [ result_real, result_imag ]
 
+# Take a real representation of a signal and return its imaginary representation
+
 imaginary = (data) -> [ data, new Float32Array(data.length) ]
+
+# Time how long a function takes to execute
 
 time = (message, func) ->
     console.log "Starting #{message}"
@@ -213,13 +246,21 @@ time = (message, func) ->
     func()
     console.log "#{message} took #{Date.now() - begin}"
 
+# Promise-ish functions
+
+# Run a function next tick cycle
+
 tick = (func) -> setTimeout func, 0
+
+# Utility function for promises
 
 call_listener = (listener, args) -> tick ->
 
     listener.apply {
         callback: -> listener.promise.do.apply this, arguments
     }, args
+
+# Creates a promise
 
 promise = ->
 
@@ -241,6 +282,7 @@ promise = ->
             return listener.promise
 
         then_do: (listener) ->
+
             @then ->
                 listener.apply this, arguments
                 @callback.apply this, arguments
@@ -258,10 +300,11 @@ promise = ->
             return this
     }
 
+# Creates a promise which will fire immediately
+
 begin = -> promise().do()
 
-hilbert_transform = (x) -> if x % 2 == 0 then 0 else 1/(Math.PI*x)
-modulus = (a, b) -> Math.sqrt a*a + b*b
+# A basic test
 
 test = ->
 
