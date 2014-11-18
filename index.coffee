@@ -211,15 +211,17 @@ time = (message, func) ->
 
 tick = (func) -> setTimeout func, 0
 
-call_listener = (listener) -> tick ->
+call_listener = (listener, args) -> tick ->
+
     listener.apply {
         callback: -> listener.promise.do.apply this, arguments
-    }, arguments
+    }, args
 
 promise = ->
 
     done = false
     listeners = []
+    args = []
     
     return {
 
@@ -228,34 +230,36 @@ promise = ->
             listener.promise = promise()
 
             if done
-                call_listener listener
+                call_listener listener, args
             else
                 listeners.push listener
 
             return listener.promise
 
         then_do: (listener) ->
-            @then(listener).do()
+            @then ->
+                listener.apply this, arguments
+                @callback.apply this, arguments
 
         do: ->
 
-            for listener in listeners
-                call_listener listener
+            args = arguments
 
-            listeners = []
+            for listener in listeners
+                call_listener listener, args
+
             done = true
+            listeners = []
 
             return this
     }
 
 begin = -> promise().do()
 
-$ ->
+test = ->
 
-    window.audio_context = new AudioContext()
-
-    test = ( (if a == 0 then 1 else Math.sin(2*Math.PI*a/8)/(2*Math.PI*a/8)) for a in [-512*1024...512*1024] )
-    # test = ( (if a == 0 then 1 else Math.sin(2*Math.PI*a/8)/(2*Math.PI*a/8)) for a in [-512...512] )
+    # test = ( (if a == 0 then 1 else Math.sin(2*Math.PI*a/8)/(2*Math.PI*a/8)) for a in [-512*1024...512*1024] )
+    test = ( (if a == 0 then 1 else Math.sin(2*Math.PI*a/8)/(2*Math.PI*a/8)) for a in [-512...512] )
     # test = [ 0, 1, 0, -1, 0, 1, 0, -1 ]
 
     wave_draw = begin().then ->
@@ -293,7 +297,13 @@ $ ->
         wave_draw = wave_draw.then ->
             draw_waveform test_real, 'rgba(255, 0, 0, 0.5)', @callback
 
-    .then_do -> wave_draw.then_do -> console.log 'done'
+    .then_do -> wave_draw.then_do -> console.log 'all done'
+
+$ ->
+
+    window.audio_context = new AudioContext()
+
+    # test()
 
     on_drop '#drop-zone', (event) ->
 
