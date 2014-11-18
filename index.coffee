@@ -133,9 +133,13 @@ draw_frequencies = (data, colour, callback) ->
 
     draw_line data, context, 16, detail, callback
 
+# Perform a Fast Fourier Transform on an imaginary signal 'data'
+
 fft = (data, from, count) ->
     
     half_count = count/2
+
+    # Pre-compute the twiddle values for the recursion
 
     cache_real = new Float32Array(half_count)
     cache_imag = new Float32Array(half_count)
@@ -145,33 +149,52 @@ fft = (data, from, count) ->
         cache_real[k] = Math.cos(angle)
         cache_imag[k] = Math.sin(angle)
 
+    # Perform the transform recursively
+
     return fft_recurse data, from, count, 1, cache_real, cache_imag
 
+# The recursive portion of the Fast Fourier Transform algorithm
+
 fft_recurse = (data, from, count, step = 1, cache_real, cache_imag) ->
+
+    # Check for the base case
+    # TODO: Investigate placing the base case at a higher count than 1
 
     if count == 1
         return [ new Float32Array([ data[0][from] ]), new Float32Array([ data[1][from] ]) ]
 
     half_count = count/2
 
+    # Recurse
+
     [ first_half_real, first_half_imag ] = fft_recurse(data, from, half_count, step*2, cache_real, cache_imag)
     [ second_half_real, second_half_imag ] = fft_recurse(data, from + step, half_count, step*2, cache_real, cache_imag)
+
+    # Combine the two results together using the twiddle factors
 
     result_real = new Float32Array(count)
     result_imag = new Float32Array(count)
 
     for k in [0...half_count]
 
+        # Fetch the twiddle factor from the pre-computed values
+
         real = cache_real[k*step]
         imag = cache_imag[k*step]
+
+        # Multiply the twiddle factor with the odd transform
 
         rr = real * second_half_real[k]
         ri = real * second_half_imag[k]
         ir = imag * second_half_real[k]
         ii = imag * second_half_imag[k]
 
+        # Add the result to the even transform
+
         result_real[k] = (first_half_real[k] + rr - ii) * ONE_ON_ROOT_TWO
         result_imag[k] = (first_half_imag[k] + ri + ir) * ONE_ON_ROOT_TWO
+
+        # Use a shortcut to easily calculate the second half of the results
 
         result_real[k+half_count] = (first_half_real[k] - (rr - ii)) * ONE_ON_ROOT_TWO
         result_imag[k+half_count] = (first_half_imag[k] - (ri + ir)) * ONE_ON_ROOT_TWO
