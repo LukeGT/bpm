@@ -42,7 +42,7 @@ get_channel_data = (file, callback) ->
             console.log 'done', buffer
             callback buffer.getChannelData(0)
 
-convolve = (data, func, range = 64) ->
+convolve = (data, func, range = 8) ->
     
     response = for a in [-range...range]
         func(a) ? 0
@@ -101,9 +101,11 @@ draw_line = (data, context, scale, detail, callback) ->
 
     , 0
 
-draw_waveform = (data, colour, callback) ->
+draw_waveform = (data, { colour, detail, scale }, callback) ->
 
-    detail = 1
+    colour ?= '#000'
+    detail ?= 0.5
+    scale ?= 256
 
     canvas = $('#waveform canvas')[0]
     canvas_width = Math.min MAX_CANVAS_WIDTH, Math.floor(data.length/detail)
@@ -115,11 +117,13 @@ draw_waveform = (data, colour, callback) ->
     context.scale 1, -1
     context.strokeStyle = colour
 
-    draw_line data, context, 256, detail, callback
+    draw_line data, context, scale, detail, callback
 
-draw_frequencies = (data, colour, callback) ->
-    
+draw_frequencies = (data, { colour, detail, scale }, callback) ->
+
+    colour = '#000'
     detail = 0.125
+    scale = 16
 
     canvas = $('#frequencies canvas')[0]
     canvas_width = Math.min MAX_CANVAS_WIDTH, Math.floor(data.length/detail)
@@ -131,7 +135,7 @@ draw_frequencies = (data, colour, callback) ->
     context.scale 1, -1
     context.strokeStyle = colour
 
-    draw_line data, context, 16, detail, callback
+    draw_line data, context, scale, detail, callback
 
 # Perform a Fast Fourier Transform on an imaginary signal 'data'
 
@@ -256,6 +260,9 @@ promise = ->
 
 begin = -> promise().do()
 
+hilbert_transform = (x) -> if x % 2 == 0 then 0 else 1/(Math.PI*x)
+modulus = (a, b) -> Math.sqrt a*a + b*b
+
 test = ->
 
     # test = ( (if a == 0 then 1 else Math.sin(2*Math.PI*a/8)/(2*Math.PI*a/8)) for a in [-512*1024...512*1024] )
@@ -263,21 +270,33 @@ test = ->
     # test = [ 0, 1, 0, -1, 0, 1, 0, -1 ]
 
     wave_draw = begin().then ->
-        draw_waveform test, 'rgba(0, 0, 0, 0.5)', @callback
+        draw_waveform test, colour: 'rgba(0, 0, 0, 0.5)', detail: 0.5, @callback
 
-    [ test_real, test_imag, test_freq ] = []
+    [ convolution, envelope, test_real, test_imag, test_freq ] = []
 
     begin().then_do ->
+        time 'convolving...', ->
+            convolution = convolve test, hilbert_transform
+
+    .then_do ->
+        time 'enveloping...', ->
+            envelope = combine test, convolution, modulus
+
+    .then_do ->
+        wave_draw = wave_draw.then ->
+            draw_waveform envelope, colour: 'rgba(0, 0, 255, 0.5', detail: 0.5, @callback
+    
+    .then_do ->
         time 'fft transform', ->
             [ test_real, test_imag ] = fft(imaginary(test), 0, test.length)
 
     .then_do ->
         time 'modulus', ->
-            test_freq = combine test_real, test_imag, (a, b) -> Math.sqrt a*a + b*b
+            test_freq = combine test_real, test_imag, modulus
 
     .then_do ->
         wave_draw = wave_draw.then ->
-            draw_frequencies test_freq, 'rgba(0, 0, 0, 0.5)', @callback
+            draw_frequencies test_freq, colour: 'rgba(0, 0, 0, 0.5)', detail: 0.5, @callback
 
     .then_do ->
         time 'find max', ->
@@ -295,7 +314,7 @@ test = ->
 
     .then_do ->
         wave_draw = wave_draw.then ->
-            draw_waveform test_real, 'rgba(255, 0, 0, 0.5)', @callback
+            draw_waveform test_real, colour: 'rgba(255, 0, 0, 0.5)', detail: 0.5, @callback
 
     .then_do -> wave_draw.then_do -> console.log 'all done'
 
@@ -303,7 +322,7 @@ $ ->
 
     window.audio_context = new AudioContext()
 
-    # test()
+    test()
 
     on_drop '#drop-zone', (event) ->
 
@@ -321,19 +340,19 @@ $ ->
 
             .then_do ->
                 draw_queue = draw_queue.then ->
-                    draw_waveform data, 'rgba(0, 0, 0, 0.15)', @callback
+                    draw_waveform data, colour: 'rgba(0, 0, 0, 0.15)', @callback
 
             .then_do ->
                 console.log 'convolving...'
-                convolution = convolve data, (x) -> if x % 2 == 0 then 0 else 1/(Math.PI*x)
+                convolution = convolve data, hilbert_transform
 
             .then_do ->
                 console.log 'enveloping...'
-                envelope = combine data, convolution, (a, b) -> Math.sqrt a*a + b*b
+                envelope = combine data, convolution, modulus
 
             .then_do ->
                 draw_queue = draw_queue.then ->
-                    draw_waveform envelope, 'rgba(255, 0, 0, 0.15)', @callback
+                    draw_waveform envelope, colour: 'rgba(255, 0, 0, 0.15)', @callback
 
             .then_do ->
                 console.log 'transforming...'
@@ -341,7 +360,7 @@ $ ->
 
             .then_do ->
                 console.log 'absoluting...'
-                frequencies = combine transform_real, transform_imag, (a, b) -> Math.sqrt a*a + b*b
+                frequencies = combine transform_real, transform_imag, modulus
 
             .then_do ->
                 console.log 'finding spike...'
@@ -357,7 +376,7 @@ $ ->
 
             .then_do ->
                 draw_queue = draw_queue.then ->
-                    draw_frequencies frequencies, 'rgba(0, 0, 0, 1)', @callback
+                    draw_frequencies frequencies, colour: 'rgba(0, 0, 0, 1)', @callback
 
             .then_do -> draw_queue.then_do -> console.log 'all done'
 
