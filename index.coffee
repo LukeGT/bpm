@@ -151,7 +151,7 @@ map = (data, func) ->
     result = new Float32Array(data.length)
 
     for d, i in data
-        result[i] = func d
+        result[i] = func d, i
 
     return result
 
@@ -243,15 +243,18 @@ draw_line = (data, context, scale, detail, callback) ->
 
 # Draw a waveform (top canvas)
 
-draw_waveform = (data, { colour, detail, scale }) -> draw_queue = draw_queue.then ->
+draw_waveform = (data, { colour, detail, scale, adjust }) -> draw_queue = draw_queue.then ->
 
     colour ?= '#000'
     detail ?= 0.5
     scale ?= 256
+    adjust ?= true
 
     canvas = $('#waveform canvas')[0]
-    canvas_width = Math.min MAX_CANVAS_WIDTH, Math.floor(data.length/detail)
-    canvas.width = canvas_width if canvas.width != canvas_width
+
+    if adjust
+        canvas_width = Math.min MAX_CANVAS_WIDTH, Math.floor(data.length/detail)
+        canvas.width = canvas_width if canvas.width != canvas_width
 
     context = canvas.getContext '2d'
     context.save()
@@ -478,18 +481,22 @@ test = ->
 
 process_file = (file) ->
     
-    [ data, downsample_ratio, sample_rate, convolution, envelope, transform_real, transform_imag, frequencies, phases, bpm ] = []
+    [ data, downsample_ratio, buffer, sample_rate, convolution, envelope, transform_real, transform_imag,
+    frequencies, phases, bpm, beat_positions, beat_frequencies, beat_phases, beat_real, beat_imag ] = []
 
     transform_size = 1024*1024
 
     begin().then ->
         get_channel_data file, @callback
 
-    .then_do (channel_data, buffer) ->
+    .then_do (channel_data, audio_buffer) ->
+
         downsample_ratio = Math.floor channel_data.length/transform_size
         console.log 'Downsampling by factor of', downsample_ratio
         data = downsample channel_data, downsample_ratio
-        sample_rate = buffer.sampleRate
+
+        sample_rate = audio_buffer.sampleRate
+        buffer = audio_buffer
 
     .then_do ->
         draw_waveform data, colour: 'rgba(0, 0, 0, 0.15)', detail: data.length/MAX_CANVAS_WIDTH
@@ -532,11 +539,12 @@ process_file = (file) ->
         , score: 0, likelihood: 0
 
         bpm = position/ratio
+        beat_positions = ( Math.floor(a/echoes*position) for a in [1..echoes] )
 
         console.log 'harmonic found:', echoes, position
         console.log 'BPM:', bpm
         console.log "Time Signature: #{echoes}/4"
-        console.log 'phases:', ( phases[Math.floor a/echoes*position] for a in [1..echoes] )
+        console.log 'phases:', ( phases[a] for a in beat_positions )
 
         draw_frequencies frequencies, colour: 'rgba(0, 0, 0, 1)', detail: downsample_ratio/8
         draw_frequencies phases, colour: 'rgba(0, 0, 255, 0.15)', detail: downsample_ratio/8
@@ -547,11 +555,45 @@ process_file = (file) ->
             context = canvas.getContext '2d'
             context.strokeStyle = 'rgba(255, 0, 0, 0.15)'
 
-            for a in [1..echoes]
+            for a in beat_positions
                 context.beginPath()
-                context.moveTo a/echoes*position*8/downsample_ratio, -512
-                context.lineTo a/echoes*position*8/downsample_ratio, 512
+                context.moveTo a*8/downsample_ratio, -512
+                context.lineTo a*8/downsample_ratio, 512
                 context.stroke()
+
+    .then_do ->
+        console.log 'generating beat wave...'
+
+        #beat_positions = [ beat_positions[beat_positions.length-1] ]
+        beat_real = map transform_real, (a, i) -> if i in beat_positions then a else 0
+        beat_imag = map transform_imag, (a, i) -> if i in beat_positions then a else 0
+
+        [ beat_imag, beat_real ] = fft [ beat_imag, beat_real ], 0, beat_real.length
+
+        beat = combine beat_imag, beat_real, modulus
+        beat_magnitude = ( frequencies[a] for a in beat_positions ).reduce (a, b) -> a + b
+
+        # draw_waveform beat, colour: 'rgba(0, 255, 255, 1)', detail: data.length/MAX_CANVAS_WIDTH, adjust: false, scale: 512*512/beat_magnitude
+        draw_waveform beat_real, colour: 'rgba(0, 255, 255, 1)', detail: data.length/MAX_CANVAS_WIDTH, adjust: false, scale: 512*512/beat_magnitude
+        draw_waveform beat_imag, colour: 'rgba(0, 255, 0, 1)', detail: data.length/MAX_CANVAS_WIDTH, adjust: false, scale: 512*512/beat_magnitude
+
+        console.log 'playing song...'
+
+        source = window.audio_context.createBufferSource()
+        source.buffer = buffer
+        source.connect window.audio_context.destination
+
+        begin_time = Date.now()
+        source.start 0
+        time_ratio = sample_rate/downsample_ratio/1000
+
+        beat_ball = setInterval ->
+            time = Date.now() - begin_time
+            sample_index = Math.floor time*time_ratio
+            $('#beat-ball .real').css bottom: beat_real[sample_index] * 256*256/beat_magnitude
+            $('#beat-ball .imag').css bottom: beat_imag[sample_index] * 256*256/beat_magnitude
+            $('#beat-ball .both').css bottom: (beat_imag[sample_index] - beat_real[sample_index]) * 256*256/beat_magnitude
+        , 1000/60
 
     .then_do -> draw_queue.then_do -> console.log 'all done'
 
