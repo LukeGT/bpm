@@ -108,9 +108,7 @@ desample = (data, ratio = 2) ->
 
 find_best_harmonic = (data, echoes, min, max) ->
     
-    best = data[..max].reduce (max, value, index) ->
-
-        return max if index < min
+    best = [min..max].reduce (max, index) ->
 
         sum = 0
 
@@ -130,8 +128,7 @@ find_best_harmonic = (data, echoes, min, max) ->
 
     , position: 0, score: 0, echoes: 0
 
-    #best.likelihood = data[best.position*2]
-    best.likelihood = Math.max.apply this, data[best.position*2-1..best.position*2+1]
+    best.likelihood = Math.max data[best.position*2-1], data[best.position*2], data[best.position*2+1]
 
     return best
 
@@ -532,9 +529,7 @@ $ ->
                 min = Math.floor 30 * ratio
                 max = Math.floor 200 * ratio
 
-                slicable_frequencies = Array.prototype.slice.call(frequencies)
-
-                { echoes, position } = (find_best_harmonic(slicable_frequencies, echoes, min, max) for echoes in [3..23]).reduce (best, next, index) ->
+                { echoes, position } = (find_best_harmonic(frequencies, echoes, min, max) for echoes in [3..23]).reduce (best, next, index) ->
                     console.log next.position/ratio, next
                     if next.likelihood > best.likelihood
                         return next
