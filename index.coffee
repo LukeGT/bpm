@@ -35,6 +35,68 @@ on_drop = (element, callback) ->
         update_counter 0
         callback.apply this, arguments
 
+# Promise-ish functions
+
+# Run a function next tick cycle
+
+tick = (func) -> setTimeout func, 0
+
+# Utility function for promises
+
+call_listener = (listener, args) -> tick ->
+
+    listener.apply {
+        callback: -> listener.promise.do.apply this, arguments
+    }, args
+
+# Creates a promise
+
+promise = ->
+
+    done = false
+    listeners = []
+    args = []
+    
+    return {
+
+        then: (listener) ->
+
+            listener.promise = promise()
+
+            if done
+                call_listener listener, args
+            else
+                listeners.push listener
+
+            return listener.promise
+
+        then_do: (listener) ->
+
+            @then ->
+                listener.apply this, arguments
+                @callback.apply this, arguments
+
+        do: ->
+
+            args = arguments
+
+            for listener in listeners
+                call_listener listener, args
+
+            done = true
+            listeners = []
+
+            return this
+
+        clear: ->
+            listeners = []
+            return this
+    }
+
+# Creates a promise which will fire immediately
+
+begin = -> promise().do()
+
 # Audio loading helper. Takes in an audio file, and calls back with the 
 # raw signal in the form of a Float32Array
 
@@ -137,11 +199,19 @@ find_best_harmonic = (data, echoes, min, max) ->
 hilbert_transform = (x) -> if x % 2 == 0 then 0 else 1/(Math.PI*x)
 modulus = (a, b) -> Math.sqrt a*a + b*b
 argument = (a, b) -> Math.atan2 b, a
+real_part = (a, b) -> a * Math.cos b
+imag_part = (a, b) -> a * Math.sin b
 
 # Drawing functions
 
-clear_canvases = ->
-    
+# Ensures that only one drawing operation is occurring at a time (because for some reason contexts are shared...)
+
+draw_queue = begin()
+
+# Clear all canvases on the page, and clears any queued renders
+
+clear_canvases = -> draw_queue.clear().then_do ->
+
     for canvas in $('canvas')
         canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height)
 
@@ -173,7 +243,7 @@ draw_line = (data, context, scale, detail, callback) ->
 
 # Draw a waveform (top canvas)
 
-draw_waveform = (data, { colour, detail, scale }, callback) ->
+draw_waveform = (data, { colour, detail, scale }) -> draw_queue = draw_queue.then ->
 
     colour ?= '#000'
     detail ?= 0.5
@@ -189,11 +259,11 @@ draw_waveform = (data, { colour, detail, scale }, callback) ->
     context.scale 1, -1
     context.strokeStyle = colour
 
-    draw_line data, context, scale, detail, callback
+    draw_line data, context, scale, detail, @callback
 
 # Draw a frequency function (bottom canvas)
 
-draw_frequencies = (data, { colour, detail, scale }, callback) ->
+draw_frequencies = (data, { colour, detail, scale }) -> draw_queue = draw_queue.then ->
 
     colour ?= '#000'
     detail ?= 1
@@ -209,7 +279,7 @@ draw_frequencies = (data, { colour, detail, scale }, callback) ->
     context.scale 1, -1
     context.strokeStyle = colour
 
-    draw_line data, context, scale, detail, callback
+    draw_line data, context, scale, detail, @callback
 
 # Perform a Fast Fourier Transform on an imaginary signal 'data'
 
@@ -291,64 +361,6 @@ time = (message, func) ->
     func()
     console.log "#{message} took #{Date.now() - begin}"
 
-# Promise-ish functions
-
-# Run a function next tick cycle
-
-tick = (func) -> setTimeout func, 0
-
-# Utility function for promises
-
-call_listener = (listener, args) -> tick ->
-
-    listener.apply {
-        callback: -> listener.promise.do.apply this, arguments
-    }, args
-
-# Creates a promise
-
-promise = ->
-
-    done = false
-    listeners = []
-    args = []
-    
-    return {
-
-        then: (listener) ->
-
-            listener.promise = promise()
-
-            if done
-                call_listener listener, args
-            else
-                listeners.push listener
-
-            return listener.promise
-
-        then_do: (listener) ->
-
-            @then ->
-                listener.apply this, arguments
-                @callback.apply this, arguments
-
-        do: ->
-
-            args = arguments
-
-            for listener in listeners
-                call_listener listener, args
-
-            done = true
-            listeners = []
-
-            return this
-    }
-
-# Creates a promise which will fire immediately
-
-begin = -> promise().do()
-
 # A basic test
 
 test = ->
@@ -361,9 +373,9 @@ test = ->
     transform_size = test.length
     sample_rate = 512
     downsample_ratio = 1
+    draw_detail = 0.5
 
-    wave_draw = begin().then ->
-        draw_waveform test, colour: 'rgba(0, 0, 0, 0.5)', detail: 0.5, @callback
+    draw_waveform test, colour: 'rgba(0, 0, 0, 0.5)', detail: draw_detail
 
     [ convolution, envelope, test_real, test_imag, test_freq, transform_real, transform_imag, frequencies, phases ] = []
 
@@ -376,8 +388,7 @@ test = ->
             envelope = combine test, convolution, modulus
 
     .then_do ->
-        wave_draw = wave_draw.then ->
-            draw_waveform envelope, colour: 'rgba(0, 0, 255, 0.5', detail: 0.5, @callback
+        draw_waveform envelope, colour: 'rgba(0, 0, 255, 0.5', detail: draw_detail
     
     .then_do ->
         console.log 'transforming...'
@@ -421,12 +432,10 @@ test = ->
         spike_phases = ( phases[Math.floor spike[1]*a/echoes]*echoes % Math.PI for a in [1..echoes] )
         console.log 'phases:', spike_phases
 
-        wave_draw = wave_draw.then ->
-            draw_frequencies frequencies, colour: 'rgba(0, 0, 0, 1)', detail: downsample_ratio/8, @callback
-        .then ->
-            draw_frequencies phases, colour: 'rgba(0, 0, 255, 0.15)', detail: downsample_ratio/8, @callback
+        draw_frequencies frequencies, colour: 'rgba(0, 0, 0, 1)', detail: downsample_ratio/8
+        draw_frequencies phases, colour: 'rgba(0, 0, 255, 0.15)', detail: downsample_ratio/8
 
-        .then_do ->
+        draw_queue.then_do ->
 
             canvas = $('#frequencies canvas')[0]
             context = canvas.getContext '2d'
@@ -446,10 +455,6 @@ test = ->
         time 'modulus', ->
             test_freq = combine test_real, test_imag, modulus
 
-    #.then_do ->
-    #    wave_draw = wave_draw.then ->
-    #        draw_frequencies test_freq, colour: 'rgba(0, 0, 0, 0.5)', detail: 0.5, @callback
-
     .then_do ->
         time 'find max', ->
             max = Array.prototype.slice.call(test_freq).reduce (max, a, index) ->
@@ -465,10 +470,90 @@ test = ->
             [ test_imag, test_real ] = fft([ test_imag, test_real ], 0, test.length)
 
     .then_do ->
-        wave_draw = wave_draw.then ->
-            draw_waveform test_real, colour: 'rgba(255, 0, 0, 0.5)', detail: 0.5, @callback
+        draw_waveform test_real, colour: 'rgba(255, 0, 0, 0.5)', detail: draw_detail
 
     .then_do -> wave_draw.then_do -> console.log 'all done'
+
+
+
+process_file = (file) ->
+    
+    [ data, downsample_ratio, sample_rate, convolution, envelope, transform_real, transform_imag, frequencies, phases, bpm ] = []
+
+    transform_size = 1024*1024
+
+    begin().then ->
+        get_channel_data file, @callback
+
+    .then_do (channel_data, buffer) ->
+        downsample_ratio = Math.floor channel_data.length/transform_size
+        console.log 'Downsampling by factor of', downsample_ratio
+        data = downsample channel_data, downsample_ratio
+        sample_rate = buffer.sampleRate
+
+    .then_do ->
+        draw_waveform data, colour: 'rgba(0, 0, 0, 0.15)', detail: data.length/MAX_CANVAS_WIDTH
+
+    .then_do ->
+        console.log 'convolving...'
+        convolution = convolve data, hilbert_transform
+
+    .then_do ->
+        console.log 'enveloping...'
+        envelope = combine data, convolution, modulus
+
+    .then_do ->
+        draw_waveform envelope, colour: 'rgba(255, 0, 0, 0.15)', detail: data.length/MAX_CANVAS_WIDTH
+
+    .then_do ->
+        console.log 'transforming...'
+        [ transform_real, transform_imag ] = fft(imaginary(envelope), 0, transform_size)
+
+    .then_do ->
+        console.log 'absoluting...'
+        frequencies = combine transform_real, transform_imag, modulus
+        phases = combine transform_real, transform_imag, argument
+
+    .then_do ->
+        console.log 'finding best harmonic...'
+
+        ratio = transform_size/60/sample_rate * downsample_ratio
+        min = Math.floor 30 * ratio
+        max = Math.floor 200 * ratio
+
+        { echoes, position } = (find_best_harmonic(frequencies, echoes, min, max) for echoes in [3..23]).reduce (best, next, index) ->
+            console.log next.position/ratio, next
+            if next.likelihood > best.likelihood
+                return next
+            else if next.likelihood == best.likelihood and next.score > best.score
+                return next
+            else
+                return best
+        , score: 0, likelihood: 0
+
+        bpm = position/ratio
+
+        console.log 'harmonic found:', echoes, position
+        console.log 'BPM:', bpm
+        console.log "Time Signature: #{echoes}/4"
+        console.log 'phases:', ( phases[Math.floor a/echoes*position] for a in [1..echoes] )
+
+        draw_frequencies frequencies, colour: 'rgba(0, 0, 0, 1)', detail: downsample_ratio/8
+        draw_frequencies phases, colour: 'rgba(0, 0, 255, 0.15)', detail: downsample_ratio/8
+
+        draw_queue.then_do ->
+
+            canvas = $('#frequencies canvas')[0]
+            context = canvas.getContext '2d'
+            context.strokeStyle = 'rgba(255, 0, 0, 0.15)'
+
+            for a in [1..echoes]
+                context.beginPath()
+                context.moveTo a/echoes*position*8/downsample_ratio, -512
+                context.lineTo a/echoes*position*8/downsample_ratio, 512
+                context.stroke()
+
+    .then_do -> draw_queue.then_do -> console.log 'all done'
 
 $ ->
 
@@ -480,90 +565,7 @@ $ ->
 
         clear_canvases()
 
-        draw_queue = begin()
-
         for file in event.originalEvent.dataTransfer.files
-
-            [ data, downsample_ratio, sample_rate, convolution, envelope, transform_real, transform_imag, frequencies, phases, bpm ] = []
-
-            transform_size = 1024*1024
-
-            begin().then ->
-                get_channel_data file, @callback
-
-            .then_do (channel_data, buffer) ->
-                downsample_ratio = Math.floor channel_data.length/transform_size
-                console.log 'Downsampling by factor of', downsample_ratio
-                data = downsample channel_data, downsample_ratio
-                sample_rate = buffer.sampleRate
-
-            .then_do ->
-                draw_queue = draw_queue.then ->
-                    draw_waveform data, colour: 'rgba(0, 0, 0, 0.15)', detail: data.length/MAX_CANVAS_WIDTH, @callback
-
-            .then_do ->
-                console.log 'convolving...'
-                convolution = convolve data, hilbert_transform
-
-            .then_do ->
-                console.log 'enveloping...'
-                envelope = combine data, convolution, modulus
-
-            .then_do ->
-                draw_queue = draw_queue.then ->
-                    draw_waveform envelope, colour: 'rgba(255, 0, 0, 0.15)', detail: data.length/MAX_CANVAS_WIDTH, @callback
-
-            .then_do ->
-                console.log 'transforming...'
-                [ transform_real, transform_imag ] = fft(imaginary(envelope), 0, transform_size)
-
-            .then_do ->
-                console.log 'absoluting...'
-                frequencies = combine transform_real, transform_imag, modulus
-                phases = combine transform_real, transform_imag, argument
-
-            .then_do ->
-                console.log 'finding best harmonic...'
-
-                ratio = transform_size/60/sample_rate * downsample_ratio
-                min = Math.floor 30 * ratio
-                max = Math.floor 200 * ratio
-
-                { echoes, position } = (find_best_harmonic(frequencies, echoes, min, max) for echoes in [3..23]).reduce (best, next, index) ->
-                    console.log next.position/ratio, next
-                    if next.likelihood > best.likelihood
-                        return next
-                    else if next.likelihood == best.likelihood and next.score > best.score
-                        return next
-                    else
-                        return best
-                , score: 0, likelihood: 0
-
-                bpm = position/ratio
-
-                console.log 'harmonic found:', echoes, position
-                console.log 'BPM:', bpm
-                console.log "Time Signature: #{echoes}/4"
-                console.log 'phases:', ( phases[Math.floor a/echoes*position] for a in [1..echoes] )
-
-                draw_queue = draw_queue.then ->
-                    draw_frequencies frequencies, colour: 'rgba(0, 0, 0, 1)', detail: downsample_ratio/8, @callback
-
-                .then ->
-                    draw_frequencies phases, colour: 'rgba(0, 0, 255, 0.15)', detail: downsample_ratio/8, @callback
-
-                .then_do ->
-
-                    canvas = $('#frequencies canvas')[0]
-                    context = canvas.getContext '2d'
-                    context.strokeStyle = 'rgba(255, 0, 0, 0.15)'
-
-                    for a in [1..echoes]
-                        context.beginPath()
-                        context.moveTo a/echoes*position*8/downsample_ratio, -512
-                        context.lineTo a/echoes*position*8/downsample_ratio, 512
-                        context.stroke()
-
-            .then_do -> draw_queue.then_do -> console.log 'all done'
+            process_file file
 
         return
