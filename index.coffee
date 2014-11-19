@@ -544,6 +544,7 @@ $ ->
                 console.log 'harmonic found:', echoes, position
                 console.log 'BPM:', bpm
                 console.log "Time Signature: #{echoes}/4"
+                console.log 'phases:', ( phases[Math.floor a/echoes*position] for a in [1..echoes] )
 
                 draw_queue = draw_queue.then ->
                     draw_frequencies frequencies, colour: 'rgba(0, 0, 0, 1)', detail: downsample/8, @callback
