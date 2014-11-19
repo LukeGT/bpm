@@ -95,7 +95,7 @@ map = (data, func) ->
 
 # Re-represents the same signal with less samples
 
-desample = (data, ratio = 2) ->
+downsample = (data, ratio = 2) ->
     
     # TODO: Remove problematic frequencies from the signal
 
@@ -360,7 +360,7 @@ test = ->
 
     transform_size = test.length
     sample_rate = 512
-    downsample = 1
+    downsample_ratio = 1
 
     wave_draw = begin().then ->
         draw_waveform test, colour: 'rgba(0, 0, 0, 0.5)', detail: 0.5, @callback
@@ -392,7 +392,7 @@ test = ->
     .then_do ->
         console.log 'finding spike...'
 
-        ratio = transform_size/60/sample_rate * downsample
+        ratio = transform_size/60/sample_rate * downsample_ratio
         min = Math.floor 200 * ratio
         max = Math.floor 300 * ratio
         echoes = 4 # TODO: Try different echoes, guess time signature PAH POW
@@ -422,9 +422,9 @@ test = ->
         console.log 'phases:', spike_phases
 
         wave_draw = wave_draw.then ->
-            draw_frequencies frequencies, colour: 'rgba(0, 0, 0, 1)', detail: downsample/8, @callback
+            draw_frequencies frequencies, colour: 'rgba(0, 0, 0, 1)', detail: downsample_ratio/8, @callback
         .then ->
-            draw_frequencies phases, colour: 'rgba(0, 0, 255, 0.15)', detail: downsample/8, @callback
+            draw_frequencies phases, colour: 'rgba(0, 0, 255, 0.15)', detail: downsample_ratio/8, @callback
 
         .then_do ->
 
@@ -434,8 +434,8 @@ test = ->
 
             for a in [1..echoes]
                 context.beginPath()
-                context.moveTo a/echoes*spike[1]*8/downsample, -512
-                context.lineTo a/echoes*spike[1]*8/downsample, 512
+                context.moveTo a/echoes*spike[1]*8/downsample_ratio, -512
+                context.lineTo a/echoes*spike[1]*8/downsample_ratio, 512
                 context.stroke()
 
     .then_do ->
@@ -484,7 +484,7 @@ $ ->
 
         for file in event.originalEvent.dataTransfer.files
 
-            [ data, downsample, sample_rate, convolution, envelope, transform_real, transform_imag, frequencies, phases, bpm ] = []
+            [ data, downsample_ratio, sample_rate, convolution, envelope, transform_real, transform_imag, frequencies, phases, bpm ] = []
 
             transform_size = 1024*1024
 
@@ -492,9 +492,9 @@ $ ->
                 get_channel_data file, @callback
 
             .then_do (channel_data, buffer) ->
-                downsample = Math.floor channel_data.length/transform_size
-                console.log 'Downsampling by factor of', downsample
-                data = desample channel_data, downsample
+                downsample_ratio = Math.floor channel_data.length/transform_size
+                console.log 'Downsampling by factor of', downsample_ratio
+                data = downsample channel_data, downsample_ratio
                 sample_rate = buffer.sampleRate
 
             .then_do ->
@@ -525,7 +525,7 @@ $ ->
             .then_do ->
                 console.log 'finding best harmonic...'
 
-                ratio = transform_size/60/sample_rate * downsample
+                ratio = transform_size/60/sample_rate * downsample_ratio
                 min = Math.floor 30 * ratio
                 max = Math.floor 200 * ratio
 
@@ -547,10 +547,10 @@ $ ->
                 console.log 'phases:', ( phases[Math.floor a/echoes*position] for a in [1..echoes] )
 
                 draw_queue = draw_queue.then ->
-                    draw_frequencies frequencies, colour: 'rgba(0, 0, 0, 1)', detail: downsample/8, @callback
+                    draw_frequencies frequencies, colour: 'rgba(0, 0, 0, 1)', detail: downsample_ratio/8, @callback
 
                 .then ->
-                    draw_frequencies phases, colour: 'rgba(0, 0, 255, 0.15)', detail: downsample/8, @callback
+                    draw_frequencies phases, colour: 'rgba(0, 0, 255, 0.15)', detail: downsample_ratio/8, @callback
 
                 .then_do ->
 
@@ -560,8 +560,8 @@ $ ->
 
                     for a in [1..echoes]
                         context.beginPath()
-                        context.moveTo a/echoes*position*8/downsample, -512
-                        context.lineTo a/echoes*position*8/downsample, 512
+                        context.moveTo a/echoes*position*8/downsample_ratio, -512
+                        context.lineTo a/echoes*position*8/downsample_ratio, 512
                         context.stroke()
 
             .then_do -> draw_queue.then_do -> console.log 'all done'
