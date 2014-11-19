@@ -190,7 +190,7 @@ find_best_harmonic = (data, echoes, min, max) ->
 
     , position: 0, score: 0, echoes: 0
 
-    best.likelihood = Math.max data[best.position*2-1], data[best.position*2], data[best.position*2+1]
+    best.likelihood = data[best.position] + Math.max data[best.position*2-1], data[best.position*2], data[best.position*2+1]
 
     return best
 
@@ -477,12 +477,13 @@ test = ->
 
     .then_do -> wave_draw.then_do -> console.log 'all done'
 
-
+beat_ball = null # This will contain the interval used to perform animations
+music_source = null # This is used to keep reference to the only source of music playing
 
 process_file = (file) ->
     
     [ data, downsample_ratio, buffer, sample_rate, convolution, envelope, transform_real, transform_imag,
-    frequencies, phases, bpm, beat_positions, beat_frequencies, beat_phases, beat_real, beat_imag ] = []
+    frequencies, phases, bpm, echoes, position, beat_positions, beat_frequencies, beat_phases, beat_real, beat_imag ] = []
 
     transform_size = 1024*1024
 
@@ -546,6 +547,9 @@ process_file = (file) ->
         console.log "Time Signature: #{echoes}/4"
         console.log 'phases:', ( phases[a] for a in beat_positions )
 
+        $('#clock .bpm').text("#{ Math.floor bpm + 0.5 } bpm")
+        $('#clock .time-signature').text("#{ echoes } / 4")
+
         draw_frequencies frequencies, colour: 'rgba(0, 0, 0, 1)', detail: downsample_ratio/8
         draw_frequencies phases, colour: 'rgba(0, 0, 255, 0.15)', detail: downsample_ratio/8
 
@@ -564,35 +568,44 @@ process_file = (file) ->
     .then_do ->
         console.log 'generating beat wave...'
 
-        #beat_positions = [ beat_positions[beat_positions.length-1] ]
         beat_real = map transform_real, (a, i) -> if i in beat_positions then a else 0
         beat_imag = map transform_imag, (a, i) -> if i in beat_positions then a else 0
 
         [ beat_imag, beat_real ] = fft [ beat_imag, beat_real ], 0, beat_real.length
 
-        beat = combine beat_imag, beat_real, modulus
+        beat = combine beat_imag, beat_real, (a, b) -> a - b
         beat_magnitude = ( frequencies[a] for a in beat_positions ).reduce (a, b) -> a + b
 
-        # draw_waveform beat, colour: 'rgba(0, 255, 255, 1)', detail: data.length/MAX_CANVAS_WIDTH, adjust: false, scale: 512*512/beat_magnitude
-        draw_waveform beat_real, colour: 'rgba(0, 255, 255, 1)', detail: data.length/MAX_CANVAS_WIDTH, adjust: false, scale: 512*512/beat_magnitude
-        draw_waveform beat_imag, colour: 'rgba(0, 255, 0, 1)', detail: data.length/MAX_CANVAS_WIDTH, adjust: false, scale: 512*512/beat_magnitude
+        draw_waveform beat, colour: 'rgba(0, 255, 255, 1)', detail: data.length/MAX_CANVAS_WIDTH, adjust: false, scale: 512*512/beat_magnitude
 
         console.log 'playing song...'
 
-        source = window.audio_context.createBufferSource()
-        source.buffer = buffer
-        source.connect window.audio_context.destination
+        music_source?.stop()
+        music_source = window.audio_context.createBufferSource()
+        music_source.buffer = buffer
+        music_source.connect window.audio_context.destination
+        music_source.start 0
 
         begin_time = Date.now()
-        source.start 0
-        time_ratio = sample_rate/downsample_ratio/1000
 
+        time_ratio = sample_rate/(downsample_ratio*1000)
+        bounce_height = 256*256/beat_magnitude
+
+        clearInterval beat_ball
         beat_ball = setInterval ->
+
             time = Date.now() - begin_time
             sample_index = Math.floor time*time_ratio
-            $('#beat-ball .real').css bottom: beat_real[sample_index] * 256*256/beat_magnitude
-            $('#beat-ball .imag').css bottom: beat_imag[sample_index] * 256*256/beat_magnitude
-            $('#beat-ball .both').css bottom: (beat_imag[sample_index] - beat_real[sample_index]) * 256*256/beat_magnitude
+
+            $('#beat-ball .real').css bottom: beat_real[sample_index] * bounce_height
+            $('#beat-ball .imag').css bottom: beat_imag[sample_index] * bounce_height
+            $('#beat-ball .both').css bottom: (beat_imag[sample_index] - beat_real[sample_index]) * bounce_height 
+
+            hand_angle = phases[beat_positions[0]] + Math.PI*2*( (time-100) * time_ratio * (position/echoes) / transform_size )
+            hand_angle = Math.floor(hand_angle*echoes/(Math.PI*2)) / echoes * Math.PI * 2
+
+            $('#clock .hand').css transform: "rotate(#{ hand_angle }rad)"
+
         , 1000/60
 
     .then_do -> draw_queue.then_do -> console.log 'all done'

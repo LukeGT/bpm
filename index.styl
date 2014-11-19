@@ -37,16 +37,8 @@ animation-time =  200ms
     height 256px
     margin 16px
 
-    &:before
-        display inline-block
-        height 100%
-        content ""
-        vertical-align middle
-    
     div
-        display inline-block
         position relative
-        vertical-align middle
         width 16px
         height 16px
         border-radius 8px
@@ -62,3 +54,43 @@ animation-time =  200ms
             height 32px
             border-radius 16px
             background-color darken(red, 10%)
+
+.vert
+    
+    &:before
+        display inline-block
+        height 100%
+        content ""
+        vertical-align middle
+
+    > *
+        display inline-block
+        vertical-align middle
+    
+
+#clock
+
+    float left
+    height 256px
+    margin 16px
+
+    font-size 0
+
+    .back
+        width 64px
+        height 64px
+        border 1px solid #CCC
+        border-radius 32px
+        margin-right -32px
+
+    .hand
+        height 32px
+        border 1px solid #444
+        vertical-align baseline
+        transform-origin 50% 100%
+        transition transform 100ms
+
+    p
+        margin 0
+        margin-left 48px
+        font-size 20px
