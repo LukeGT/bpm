@@ -161,7 +161,7 @@ downsample = (data, ratio = 2) ->
     
     # TODO: Remove problematic frequencies from the signal
 
-    result = new Float32Array(data.length/ratio)
+    result = new Float32Array(Math.floor data.length/ratio)
 
     for a in [0...result.length]
         result[a] = data[Math.floor a*ratio]
