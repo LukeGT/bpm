@@ -104,19 +104,10 @@
 	"buffers":
 	[
 		{
-			"file": "Makefile",
-			"settings":
-			{
-				"buffer_size": 20,
-				"line_ending": "Windows",
-				"name": "all:"
-			}
-		},
-		{
 			"file": "report/report.txt",
 			"settings":
 			{
-				"buffer_size": 6151,
+				"buffer_size": 26094,
 				"line_ending": "Windows"
 			}
 		}
@@ -124,7 +115,7 @@
 	"build_system": "Packages/Makefile/Make.sublime-build",
 	"command_palette":
 	{
-		"height": 196.0,
+		"height": 392.0,
 		"selected_items":
 		[
 			[
@@ -184,7 +175,7 @@
 				"Preferences: Settings - User"
 			]
 		],
-		"width": 400.0
+		"width": 512.0
 	},
 	"console":
 	{
@@ -205,10 +196,13 @@
 	},
 	"expanded_folders":
 	[
-		"/D/Users/Luke/projects/bpm"
+		"/D/Users/Luke/projects/bpm",
+		"/D/Users/Luke/projects/bpm/report",
+		"/D/Users/Luke/projects/bpm/report/images"
 	],
 	"file_history":
 	[
+		"/D/Users/Luke/projects/bpm/Makefile",
 		"/D/Users/Luke/projects/bpm/bpm.sublime-project",
 		"/D/Users/Luke/projects/bpm/report/report.aux",
 		"/D/Users/Luke/Downloads/Chrome/index.coffee",
@@ -334,6 +328,33 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"beat-spectrum",
+			"\\\\ref",
+			"label",
+			"includegraphics",
+			"omega",
+			"first",
+			"bpm",
+			"f",
+			"array",
+			"96",
+			"256",
+			"        \\addplot [orange, no markers, samples = 256] {\n",
+			"256",
+			"24",
+			"20",
+			"ultra",
+			"128",
+			"16",
+			"32",
+			"48",
+			"sin",
+			"128",
+			"=",
+			"blue",
+			"from",
+			"case",
+			"=",
 			"tabular",
 			"F",
 			"$",
@@ -434,26 +455,7 @@
 			"get_toe_offset",
 			"toe",
 			"P-I",
-			"lastclose(",
-			"VOP_LASTCLOSE",
-			"VOP_INCOPEN",
-			"VOP_INVOPEN",
-			"VOP_",
-			"#include <vfs.h>",
-			"runprogram",
-			"SYSCALL",
-			"runprogram",
-			"ENOEXEC",
-			"EI_MAG0",
-			"struct thread",
-			"VOP_READ",
-			"load_segment",
-			"UIO_USERISPACE",
-			"tm_badfaultfunc",
-			"userptr",
-			"dummy",
-			"mips_trap",
-			"EX_SYS"
+			"lastclose("
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -474,61 +476,33 @@
 	"groups":
 	[
 		{
-			"selected": 1,
+			"selected": 0,
 			"sheets":
 			[
 				{
 					"buffer": 0,
-					"file": "Makefile",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 20,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								20,
-								20
-							]
-						],
-						"settings":
-						{
-							"auto_name": "all:",
-							"syntax": "Packages/Makefile/Makefile.tmLanguage"
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 1,
-					"type": "text"
-				},
-				{
-					"buffer": 1,
 					"file": "report/report.txt",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 6151,
+						"buffer_size": 26094,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								5808,
-								5808
+								25509,
+								25509
 							]
 						],
 						"settings":
 						{
+							"spell_check": true,
 							"syntax": "Packages/MarkdownEditing/Markdown.tmLanguage"
 						},
 						"translation.x": 0.0,
-						"translation.y": 1044.0,
+						"translation.y": 9110.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
@@ -570,7 +544,7 @@
 	"menu_visible": true,
 	"output.exec":
 	{
-		"height": 94.0
+		"height": 647.0
 	},
 	"output.find_results":
 	{
