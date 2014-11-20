@@ -286,7 +286,7 @@ draw_frequencies = (data, { colour, detail, scale }) -> draw_queue = draw_queue.
 
 # Perform a Fast Fourier Transform on an imaginary signal 'data'
 
-fft = (data, from, count) ->
+fft = (data, from = 0, count = data.length) ->
     
     half_count = count/2
 
@@ -305,8 +305,9 @@ fft = (data, from, count) ->
     return fft_recurse data, from, count, 1, cache_real, cache_imag
 
 # The recursive portion of the Fast Fourier Transform algorithm
+# TODO: Represent the complex numbers in polar form instead - 4 multiplications become 1!
 
-fft_recurse = (data, from, count, step = 1, cache_real, cache_imag) ->
+fft_recurse = (data, from, count, step, cache_real, cache_imag) ->
 
     # Check for the base case
     # TODO: Investigate placing the base case at a higher count than 1
