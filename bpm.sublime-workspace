@@ -1,0 +1,722 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"upds",
+				"update_state"
+			],
+			[
+				"joinv",
+				"joint_velocities"
+			],
+			[
+				"begin",
+				"beginning"
+			],
+			[
+				"knee",
+				"knee"
+			],
+			[
+				"time",
+				"timestamp"
+			],
+			[
+				"lega",
+				"leg_angles"
+			],
+			[
+				"ups",
+				"update_state"
+			],
+			[
+				"joint",
+				"joint_velocities"
+			],
+			[
+				"righh",
+				"right_hip"
+			],
+			[
+				"lefth",
+				"left_hip"
+			],
+			[
+				"ankle",
+				"ankle_angle"
+			],
+			[
+				"join",
+				"joint_velocities"
+			],
+			[
+				"d",
+				"d_time"
+			],
+			[
+				"comas",
+				"centre_of_mass"
+			],
+			[
+				"vaddr_",
+				"vaddr_t"
+			],
+			[
+				"PAGE_",
+				"PAGE_BITS"
+			],
+			[
+				"old",
+				"old_break"
+			],
+			[
+				"sml",
+				"swing_heel_middle_leg_angles"
+			],
+			[
+				"sb",
+				"swing_beginning"
+			],
+			[
+				"accel",
+				"accel_decel_function"
+			],
+			[
+				"getheean",
+				"get_heel_knee_control_angle"
+			],
+			[
+				"moveheel",
+				"move_heel_knee_control"
+			],
+			[
+				"strid",
+				"stride_length"
+			],
+			[
+				"ad",
+				"ankle_distance"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "Makefile",
+			"settings":
+			{
+				"buffer_size": 21,
+				"line_ending": "Windows",
+				"name": "all:"
+			}
+		}
+	],
+	"build_system": "Packages/Makefile/Make.sublime-build",
+	"command_palette":
+	{
+		"height": 196.0,
+		"selected_items":
+		[
+			[
+				"save",
+				"Project: Save As"
+			],
+			[
+				"project",
+				"Project: Add Folder"
+			],
+			[
+				"sort",
+				"Sort Lines"
+			],
+			[
+				"add",
+				"Project: Add Folder"
+			],
+			[
+				"coffee",
+				"Set Syntax: CoffeeScript"
+			],
+			[
+				"install",
+				"Package Control: Install Package"
+			],
+			[
+				"removep",
+				"Package Control: Remove Package"
+			],
+			[
+				"package",
+				"Package Control: List Packages"
+			],
+			[
+				"install ",
+				"Package Control: Install Package"
+			],
+			[
+				"addf",
+				"Project: Add Folder"
+			],
+			[
+				"add fol	",
+				"Project: Add Folder"
+			],
+			[
+				"add f",
+				"Project: Add Folder"
+			],
+			[
+				"instal",
+				"Package Control: Install Package"
+			],
+			[
+				"settings",
+				"Preferences: Settings - User"
+			]
+		],
+		"width": 400.0
+	},
+	"console":
+	{
+		"height": 126.0,
+		"history":
+		[
+			"import urllib.request,os,hashlib; h = '7183a2d3e96f11eeadd761d777e62404' + 'e330c659d4bb41d3bdf022e94cab3cd0'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://sublime.wbond.net/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)"
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/D/Users/Luke/projects/bpm",
+		"/D/Users/Luke/projects/bpm/report"
+	],
+	"file_history":
+	[
+		"/D/Users/Luke/Downloads/Chrome/index.coffee",
+		"/C/Windows/Logs/CBS/CBS.log",
+		"/C/Users/Luke/AppData/Local/Temp/Temp1_jhPrimeminer-T17v12.zip/README.txt",
+		"/D/Users/Luke/Downloads/Chrome/jhPrimeminer-T17v12/miner.bat",
+		"/C/Users/Luke/projects/thesis/report/graph-data/centre_of_mass.csv",
+		"/C/Users/Luke/projects/thesis/report/heel/conclusions.txt",
+		"/C/Users/Luke/projects/thesis/report/report.latex",
+		"/C/Users/Luke/projects/thesis/report/default.latex",
+		"/C/Users/Luke/projects/thesis/report/metadata.txt",
+		"/C/Users/Luke/AppData/Local/Temp/Rar$DIa0.618/ReadMe.txt",
+		"/C/Users/Luke/projects/thesis/report/heel/methodology.txt",
+		"/C/Users/Luke/projects/thesis/report/striker/results.txt",
+		"/C/Users/Luke/projects/thesis/report/striker/introduction.txt",
+		"/C/Users/Luke/projects/thesis/report/graph-data/stand-straight-husker.csv",
+		"/C/Users/Luke/projects/thesis/report/graph-data/step_size.csv",
+		"/C/Users/Luke/projects/thesis/report/title.txt",
+		"/C/Users/Luke/projects/thesis/report/report.aux",
+		"/C/Users/Luke/projects/thesis/report/references.txt",
+		"/C/Users/Luke/projects/thesis/report/bibliography.bibtex",
+		"/C/Users/Luke/projects/thesis/report/Makefile",
+		"/c/Users/Luke/projects/thesis-report/report/heel/methodology.txt",
+		"/c/Users/Luke/projects/thesis-report/report/bibliography.bibtex",
+		"/C/Program Files (x86)/PuTTY/README.txt",
+		"/C/Users/Luke/AppData/Local/Temp/Temp1_Grooveplayer.zip/manifest.json",
+		"/C/Users/Luke/AppData/Local/Temp/Temp1_Grooveplayer_prev.zip/manifest.json",
+		"/D/Users/Luke/Dropbox/Chrome/Grooveplayer/manifest.json",
+		"/C/Users/Luke/projects/sem-options/sem_options.pl",
+		"/D/Users/Luke/Dropbox/Chrome/Grooveplayer/src/background.coffee",
+		"/C/Users/Luke/projects/runswift/robot/perception/localisation/LocalisationUtils.cpp",
+		"/C/Users/Luke/projects/runswift/robot/utils/basic_onullstream.hpp",
+		"/C/Users/Luke/projects/runswift/robot/types/Odometry.hpp",
+		"/C/Users/Luke/projects/runswift/robot/motion/generator/HeelToToeWalkGenerator.cpp",
+		"/C/Users/Luke/projects/runswift/robot/motion/generator/HeadGenerator.cpp",
+		"/C/Users/Luke/projects/graze/index.coffee",
+		"/C/Users/Luke/projects/eos-asst3/kern/include/vm.h",
+		"/C/Users/Luke/projects/eos-asst3/kern/vm/frametable.c",
+		"/C/Users/Luke/projects/eos-asst3/kern/vm/addrspace.c",
+		"/C/Users/Luke/projects/eos-asst3/kern/syscall/proc_syscalls.c",
+		"/C/Users/Luke/projects/eos-asst3/design.txt",
+		"/D/Users/Luke/Downloads/Torrents/Adobe Photoshop Lightroom 5.4 Final (64 bit) [ChingLiu]/ChingLiu.Install.Notes.nfo",
+		"/D/Users/Luke/Dropbox/cs3121 2014/Assignment3/allsubmissions/3_3387679.txt",
+		"/C/Users/Luke/AppData/Local/Google/Chrome/User Data/Local State",
+		"/D/Users/Luke/Documents/Adobe Premiere Pro CC 7.2.1 Multilanguage [ChingLiu]/ChingLiu.Install.Notes.nfo",
+		"/D/Users/Luke/Documents/Adobe Premiere Pro CC 7.2.1 Multilanguage [ChingLiu]/How To Open Nfo Files.txt",
+		"//LUKE-DESKTOP/Users/Luke/Adobe Premiere Pro CC 7.2.1 Multilanguage [ChingLiu]/Adobe Premiere Pro CC 7.2.1.rar",
+		"/C/Users/Luke/projects/eos-asst3/kern/vm/vm.c",
+		"/C/Users/Luke/projects/eos-asst3/common/gcc-millicode/cmpdi2.c",
+		"/C/Users/Luke/projects/eos-asst3/kern/arch/mips/locore/cache-mips161.S",
+		"/C/Users/Luke/projects/eos-asst3/kern/include/copyinout.h",
+		"/C/Users/Luke/projects/eos-asst3/man/libc/free.html",
+		"/C/Users/Luke/projects/eos-asst3/kern/include/file.h",
+		"/C/Users/Luke/projects/eos-asst3/kern/lib/kgets.c",
+		"/C/Users/Luke/projects/eos-asst3/kern/include/vfs.h",
+		"/C/Users/Luke/projects/eos-asst3/design/procsyscalls.txt",
+		"/C/Users/Luke/projects/eos-asst3/kern/arch/mips/syscall/syscall.c",
+		"/C/Users/Luke/projects/eos-asst3/kern/include/kern/syscall.h",
+		"/C/Users/Luke/projects/eos-asst3/kern/include/syscall.h",
+		"/C/Users/Luke/projects/eos-asst3/.gitignore",
+		"/C/Users/Luke/projects/eos-asst3/CHANGES",
+		"/C/Users/Luke/projects/eos-asst3/CHANGES.syscalls",
+		"/C/Users/Luke/projects/eos-asst3/configure",
+		"/C/Users/Luke/projects/eos-asst3/man/syscall/sbrk.html",
+		"/C/Users/Luke/projects/eos-asst3/kern/fs/sfs/sfs_balloc.c",
+		"/C/Users/Luke/AppData/Roaming/Sublime Text 3/Packages/User/Preferences.sublime-settings",
+		"/C/Users/Luke/projects/heel-to-toe/src/heel-to-toe.coffee",
+		"/C/Users/Luke/projects/runswift/robot/perception/behaviour/BehaviourHelpers.cpp",
+		"/C/Users/Luke/projects/runswift/image/home/nao/data/behaviours/helpers.py",
+		"/C/Users/Luke/projects/runswift/robot/utils/Histogram.hpp",
+		"/C/Users/Luke/projects/eos-asst3/sys161-asst3.conf.txt",
+		"/C/Users/Luke/projects/cut-sticks/cut-sticks.coffee",
+		"/C/Users/Luke/projects/cut-sticks/cut-sticks.js",
+		"/C/Windows/System32/drivers/etc/hosts",
+		"/C/Users/Luke/projects/eos-asst2/kern/vfs/vfscwd.c",
+		"/C/Users/Luke/projects/eos-asst2/kern/vfs/vfslist.c",
+		"/C/Users/Luke/projects/eos-asst2/kern/vfs/vfslookup.c",
+		"/C/Users/Luke/projects/eos-asst2/kern/vfs/vfspath.c",
+		"/C/Users/Luke/projects/eos-asst2/kern/vfs/device.c",
+		"/C/Users/Luke/projects/eos-asst2/kern/vfs/devnull.c",
+		"/C/Users/Luke/projects/eos-asst2/kern/include/test.h",
+		"/C/Users/Luke/projects/eos-asst2/userland/lib/libc/arch/mips/syscalls-mips.S",
+		"/C/Users/Luke/projects/eos-asst2/userland/lib/libc/syscalls/gensyscalls.sh",
+		"/C/Users/Luke/projects/eos-asst2/kern/conf/GENERIC",
+		"/C/Users/Luke/projects/eos-asst2/common/gcc-millicode/longlong.h",
+		"/C/Users/Luke/projects/eos-asst2/kern/vm/copyinout.c",
+		"/C/Users/Luke/projects/eos-asst2/kern/include/copyinout.h",
+		"/C/Users/Luke/projects/eos-asst2/kern/syscall/loadelf.c",
+		"/C/Users/Luke/projects/eos-asst2/kern/lib/uio.c",
+		"/C/Users/Luke/projects/eos-asst2/kern/include/vfs.h",
+		"/C/Users/Luke/projects/eos-asst2/kern/include/uio.h",
+		"/C/Users/Luke/projects/eos-asst2/kern/dev/lamebus/emu.c",
+		"/C/Users/Luke/projects/eos-asst2/kern/include/version.h",
+		"/C/Users/Luke/projects/eos-asst2/design/usermalloc.txt",
+		"/C/Users/Luke/projects/eos-asst2/kern/arch/mips/locore/trap.c",
+		"/C/Users/Luke/projects/eos-asst2/kern/include/syscall.h",
+		"/C/Users/Luke/projects/eos-asst2/kern/arch/mips/syscall/syscall.c",
+		"/C/Users/Luke/projects/eos-asst2/kern/arch/mips/include/trapframe.h",
+		"/C/Users/Luke/projects/eos-asst2/userland/testbin/badcall/common_path.c",
+		"/C/Users/Luke/projects/eos-asst2/configure",
+		"/C/Users/Luke/projects/eos-asst2/CHANGES",
+		"/C/Users/Luke/projects/eos-asst2/design/shell.txt",
+		"/C/Users/Luke/projects/eos-asst2/kern/include/synch.h",
+		"/C/Users/Luke/projects/eos-asst2/man/bin/true.html",
+		"/C/Users/Luke/projects/eos-asst2/kern/arch/mips/locore/cache-mips161.S",
+		"/C/Users/Luke/projects/eos-asst2/kern/lib/misc.c",
+		"/C/Users/Luke/projects/eos-asst2/Makefile"
+	],
+	"find":
+	{
+		"height": 34.0
+	},
+	"find_in_files":
+	{
+		"height": 90.0,
+		"where_history":
+		[
+			""
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"DoS attack",
+			", error",
+			"error",
+			"corrupt",
+			"addition",
+			"teh",
+			"abovementioned",
+			"respectively",
+			"sliding",
+			"targetting",
+			"lift",
+			"rock",
+			"each",
+			"ground",
+			"creating",
+			"swing",
+			"ogura",
+			"wabian",
+			"6330",
+			"centre of mass",
+			"fig:cornell-bipeds",
+			"fig:",
+			"Simulator",
+			"simulator",
+			"human",
+			"passive",
+			"kajita20013d",
+			"graf2012center",
+			"control",
+			"turning",
+			"LB_INTERACTION_TIME_HERE",
+			"VM1698:2",
+			"$0.00",
+			"	",
+			"next_state",
+			"adjustment",
+			"target_max_height",
+			"start_max_height",
+			"target_max_height",
+			"walking_heel_height_function",
+			"heel_target",
+			"walking_heel_height_function",
+			"hip",
+			"LEFT",
+			"hip",
+			"long",
+			"L",
+			"LEFT",
+			"LKneePitch",
+			"hip",
+			"LEFT",
+			"update_sensors",
+			"write_parameters",
+			"nod_gyro_ratio",
+			"sway_angle",
+			"walking_heel_height_function",
+			"state.",
+			"hip",
+			"knee_angle",
+			"hip_angle",
+			"motion_approximation_function",
+			"joint_velocities",
+			"update_state",
+			"centre_of_mass",
+			"window.",
+			"window",
+			"left_thigh",
+			"centre_of_mass",
+			"centre_of_mas",
+			"console",
+			"	",
+			"EST] ",
+			"magn",
+			"mag",
+			"ma",
+			"mag",
+			"magnet",
+			"as",
+			"PAGE_FRAME",
+			"vaddr",
+			"int",
+			"VADDR_TO_PADDR",
+			"as_adjust_heap",
+			"velocity_control_function",
+			"x",
+			"midpoint",
+			"velocity_control_function",
+			"=====",
+			",",
+			"else",
+			"get_toe_offset",
+			"toe",
+			"P-I",
+			"lastclose(",
+			"VOP_LASTCLOSE",
+			"VOP_INCOPEN",
+			"VOP_INVOPEN",
+			"VOP_",
+			"#include <vfs.h>",
+			"runprogram",
+			"SYSCALL",
+			"runprogram",
+			"ENOEXEC",
+			"EI_MAG0",
+			"struct thread",
+			"VOP_READ",
+			"load_segment",
+			"UIO_USERISPACE",
+			"tm_badfaultfunc",
+			"userptr",
+			"dummy",
+			"mips_trap",
+			"EX_SYS"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": true,
+		"replace_history":
+		[
+			"org",
+			"- ",
+			"		\n"
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "Makefile",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 21,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								15,
+								15
+							]
+						],
+						"settings":
+						{
+							"auto_name": "all:",
+							"syntax": "Packages/Makefile/Makefile.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 22.0
+	},
+	"input":
+	{
+		"height": 0.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.exec":
+	{
+		"height": 94.0
+	},
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"project": "bpm.sublime-project",
+	"replace":
+	{
+		"height": 40.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+			[
+				"conc",
+				"heel\\conclusions.txt"
+			],
+			[
+				"back",
+				"heel\\background.txt"
+			],
+			[
+				"future",
+				"heel\\future_work.txt"
+			],
+			[
+				"def",
+				"default.latex"
+			],
+			[
+				"repl",
+				"report.latex"
+			],
+			[
+				"meth",
+				"heel\\methodology.txt"
+			],
+			[
+				"strire",
+				"striker\\results.txt"
+			],
+			[
+				"tit",
+				"title.txt"
+			],
+			[
+				"replat",
+				"report.latex"
+			],
+			[
+				"make",
+				"Makefile"
+			],
+			[
+				"met",
+				"metadata.txt"
+			],
+			[
+				"bib",
+				"bibliography.bibtex"
+			],
+			[
+				"ind",
+				"heel-to-toe\\index.html"
+			],
+			[
+				"heelhpp",
+				"robot\\motion\\generator\\HeelToToeWalkGenerator.hpp"
+			],
+			[
+				"heelcpp",
+				"robot\\motion\\generator\\HeelToToeWalkGenerator.cpp"
+			],
+			[
+				"coffe",
+				"src\\heel-to-toe.coffee"
+			],
+			[
+				"framt",
+				"kern\\vm\\frametable.c"
+			],
+			[
+				"vmc",
+				"kern\\vm\\vm.c"
+			],
+			[
+				"vmh",
+				"kern\\include\\vm.h"
+			],
+			[
+				"procsy",
+				"kern\\syscall\\proc_syscalls.c"
+			],
+			[
+				"sysc",
+				"kern\\arch\\mips\\syscall\\syscall.c"
+			],
+			[
+				"heelto",
+				"heel-to-toe\\src\\heel-to-toe.coffee"
+			],
+			[
+				"heelc",
+				"src\\heel-to-toe.coffee"
+			],
+			[
+				"vfsc",
+				"kern\\vfs\\vfscwd.c"
+			],
+			[
+				"vfs",
+				"kern\\include\\vfs.h"
+			],
+			[
+				"gensys",
+				"userland\\lib\\libc\\syscalls\\gensyscalls.sh"
+			],
+			[
+				"elfh",
+				"kern\\include\\elf.h"
+			],
+			[
+				"loadelf",
+				"kern\\syscall\\loadelf.c"
+			],
+			[
+				"vfsh",
+				"kern\\include\\vfs.h"
+			],
+			[
+				"uio",
+				"kern\\include\\uio.h"
+			],
+			[
+				"copinout",
+				"kern\\include\\copyinout.h"
+			],
+			[
+				"copyinout",
+				"kern\\vm\\copyinout.c"
+			],
+			[
+				"traph",
+				"kern\\arch\\mips\\include\\trapframe.h"
+			],
+			[
+				"syscalh",
+				"kern\\include\\syscall.h"
+			],
+			[
+				"syscallc",
+				"kern\\arch\\mips\\syscall\\syscall.c"
+			],
+			[
+				"trapc",
+				"kern\\arch\\mips\\locore\\trap.c"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 392.0,
+		"selected_items":
+		[
+		],
+		"width": 624.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 186.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}
