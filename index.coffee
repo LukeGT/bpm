@@ -437,7 +437,6 @@ test = ->
         console.log 'phases:', spike_phases
 
         draw_frequencies frequencies, colour: 'rgba(0, 0, 0, 1)', detail: downsample_ratio/8
-        draw_frequencies phases, colour: 'rgba(0, 0, 255, 0.15)', detail: downsample_ratio/8
 
         draw_queue.then_do ->
 
@@ -552,7 +551,6 @@ process_file = (file) ->
         $('#clock .time-signature').text("#{ echoes } / 4")
 
         draw_frequencies frequencies, colour: 'rgba(0, 0, 0, 1)', detail: downsample_ratio/8
-        draw_frequencies phases, colour: 'rgba(0, 0, 255, 0.15)', detail: downsample_ratio/8
 
         draw_queue.then_do ->
 
@@ -574,10 +572,10 @@ process_file = (file) ->
 
         [ beat_imag, beat_real ] = fft [ beat_imag, beat_real ], 0, beat_real.length
 
-        beat = combine beat_imag, beat_real, (a, b) -> a - b
+        beat = combine beat_imag, beat_real, (a, b) -> a + b
         beat_magnitude = ( frequencies[a] for a in beat_positions ).reduce (a, b) -> a + b
 
-        draw_waveform beat, colour: 'rgba(0, 255, 255, 1)', detail: data.length/MAX_CANVAS_WIDTH, adjust: false, scale: 512*512/beat_magnitude
+        draw_waveform beat, colour: 'rgba(0, 255, 255, 1)', detail: data.length/MAX_CANVAS_WIDTH, adjust: false, scale: 512*256/beat_magnitude
 
         console.log 'playing song...'
 
@@ -598,11 +596,11 @@ process_file = (file) ->
             time = Date.now() - begin_time
             sample_index = Math.floor time*time_ratio
 
-            $('#beat-ball .real').css bottom: beat_real[sample_index] * bounce_height
-            $('#beat-ball .imag').css bottom: beat_imag[sample_index] * bounce_height
-            $('#beat-ball .both').css bottom: (beat_imag[sample_index] - beat_real[sample_index]) * bounce_height 
+            $('#beat-ball .real').css top: beat_real[sample_index] * bounce_height
+            $('#beat-ball .imag').css top: beat_imag[sample_index] * bounce_height
+            $('#beat-ball .both').css top: (beat_imag[sample_index] + beat_real[sample_index]) * bounce_height 
 
-            hand_angle = phases[beat_positions[0]] + Math.PI*2*( (time-100) * time_ratio * (position/echoes) / transform_size )
+            hand_angle = phases[beat_positions[0]] + Math.PI*2*( (time) * time_ratio * (position/echoes) / transform_size )
             hand_angle = Math.floor(hand_angle*echoes/(Math.PI*2)) / echoes * Math.PI * 2
 
             $('#clock .hand').css transform: "rotate(#{ hand_angle }rad)"
