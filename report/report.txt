@@ -1,5 +1,89 @@
 \clearpage
 
-# Test
+# Introduction
 
-This is a test
+The aim of this project was to be able to take any song and make an accurate prediction about it's "Beat's Per Minute" (BPM), the standard measure of the tempo of a song.  No external signal processing libraries were used in this project, and instead everything was built from scratch, in order to learn more about signal processing.  The only library used was the WebAudio API, in order to convert various audio formats into an array of floating point numbers representing the raw signal.  
+
+The project was implemented as a webpage, and is available for your viewing pleasure here: [http://www.cse.unsw.edu.au/~lukegt/bpm/]().  It works best in Google Chrome.  Just drag and drop a song into the indicated area and wait a few seconds while it churns through the mathematics.  The interface may become unresponsive while this happens, but soon the song will begin playing and the output of the program will display.  
+
+The general approach was to first find the envelope of the signal using the Hilbert transform, approximated as a Finite Impulse Response filter.  The envelope was then passed through a Fast Fourier Transform algorithm to find the frequencies of the key beats in the song.  Then a heuristic driven algorithm was used to find the best match for the primary beat and its harmonics, taking into account a variety of possible time signatures.  The output of the algorithm is a BPM measurement, an estimation of the song's time signature, an animation to represent the strength of each beat in each bar, the location of each beat in the signal, and the location of the beginning of each bar.  
+
+# Methodology
+
+We will now take a look at how the algorithm works in more detail.  
+
+## Downsampling
+
+Modern music is stored at a very high quality, with a 5 minute song containing 13.23 million samples if it is recorded at the standard rate of 44100Hz.  It is unpractical to analyse so many samples, especially when the information about the tempo of the song is present at a very low frequency.  
+
+As a result, the first step of the algorithm is to downsample the audio signal.  To simplify things, the signal was downsampled at an integer ratio, which meant that we could simply select a subset of samples spread out at regular intervals throughout the signal.  
+
+This process results in what is called aliasing, causing new frequencies to appear in the downsampled signal that were not present in the original.  The reason for this is to do with Shannon's Sampling Theorem, which states that "the sampling frequency should be twice the maximal frequency present in the signal".  This means that lowering the sampling rate also lowers the highest frequencies we can represent, causing the high frequency waves from the original signal to simply introduce noise.  See Figure \ref{fig:aliasing} for a visual explanation.  
+
+\begin{figure}
+    \centering
+    \includegraphics{images/downsample_aliasing.png}
+    \caption{Here we can see how sampling a high frequency wave (red) at an insufficient sample rate can cause other undesired frequencies (blue) to appear.}
+    \label{fig:aliasing}
+\end{figure}
+
+Normally this issue is resolved by running the original signal through a low pass filter, removing the frequencies which would cause aliasing.  However, for the purposes of finding the beat of a song, the effects of aliasing are minimal, and so this issue was not dealt with in this project.  
+
+## Hilbert Transform
+
+The Hilbert transform is a linear operator which takes in a signal $u$ and produces the harmonic conjugate of $u$.  The Hilbert transform is key in deriving the *analytic signal* of a signal $u$, which is a complex representation of a signal that makes interesting properties more readily available.  It removes all the negative frequencies from the signal, which are redundant and unnecessary.  If $H$ is the Hilbert transform operator, and $A$ is the analytic signal of $u$, we get:
+
+\begin{align}
+A &= u + iH[u]
+\end{align}
+
+The analytic signal allows us to easily find the envelope $E$ of the signal $u$ at a point in time $t$ by simply taking the modulus of the analytic signal:
+
+\begin{align}
+E(t) &= | A(t) | \notag\\
+E(t) &= | u(t) + iH[u](t) | \notag\\
+E(t) &= \sqrt{ u(t)^2 + H[u](t)^2 }
+\end{align}
+
+The envelope of a signal is a representation of the signal's amplitude over time.  As a result the envelope is key in determining the tempo of a song, since a beat is essentially a periodic change in amplitude.  
+
+The Hilbert transform can be defined as a simple multiplier operator on the fourier transform of a signal.  If we denote the Fourier transform by $\mathcal{F}$, then its definition is as follows:
+
+\begin{align}
+\mathcal{F}[H[u]](\omega) = (-i\ sgn(\omega)) \cdot \mathcal{F}[u](\omega)
+\end{align}
+
+So this will essentially multiply all negative frequencies by $i$, and all positive frequencies by $-i$.  Since $i = e^{ i \frac{\pi}{2} }$ and $-i = e^{ -i\frac{\pi}{2} }$, this essentially results in a phase shift of $\frac{\pi}{2}$ for each of the negative frequencies and $-\frac{\pi}{2}$ for positive frequencies.  
+
+This definition is the same for when we use the discrete fourier transform $\mathcal{DF}$.  We can define the function $h$, where $\mathcal{DF}[h](\omega) = -i\ sgn(\omega)$, then use convolution theorem to represent the above dot product as a convolution instead, and then take the inverse discrete Fourier transform of both sides to give:
+
+\begin{align}
+\mathcal{DF}[H[u]](\omega) &= \mathcal{DF}[h](\omega) \cdot \mathcal{DF}[u](\omega) \notag\\
+\mathcal{DF}[H[u]] &= \mathcal{DF}[h * u] \notag\\
+H[u] &= h * u
+\end{align}
+
+So we can find the Hilbert transform of a signal $u$ by simply convolving it with a response function $h$, given by^[I had a shot at deriving this, but I couldn't crack it in the space of time that I had. This result is taken from the Wikipedia article on the Hilbert transform]:
+
+\begin{align}
+    h(n) &= \mathcal{DF}^{-1}[-i\ sgn](n) \notag\\
+    h(n) &= 
+    \begin{cases}
+        0 & \text{for even $n$} \\
+        \frac{2}{\pi n} & \text{for odd $n$}
+    \end{cases}
+\end{align}
+
+However, calculating this conolution for a very large amount of samples is not feasible, since for $N$ samples we must perform $N^2$ multiplications.  Instead we approximate the response function as a Finite Impulse Response (FIR), which means that we choose a constant $w$ such that all values of $h(n)$ further than $w$ away from the origin are simply 0, and do not need to be considered.
+
+\begin{align}
+    h(n) &= 
+    \begin{cases}
+        0 & \text{for even $n$ or if $|n| > w$} \\
+        \frac{2}{\pi n} & \text{otherwise}
+    \end{cases}
+\end{align}
+
+Now if we have $N$ samples, we must only perform $Nw$ multiplications, which is much more feasible if we choose a small $w$.  However, the smaller the value of $w$, the less accurate the FIR approximation will be.  
+
+The actual $w$ chosen for this project was very low at 8.  This was chosen empirically by observing the final spectrum of the envelope.  It appeared that increasing the quality of the Hilbert transform had little effect on the quality of the spectrum, so a very small value was chosen in order to speed up the algorithm^[I'm aware that I could have calculated the Hilbert transform by applying FFT, shifting the phases appropriately, then applying inverse FFT, but when I realised this I didn't have enough time to implement it].  

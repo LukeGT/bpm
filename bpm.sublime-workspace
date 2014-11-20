@@ -107,9 +107,17 @@
 			"file": "Makefile",
 			"settings":
 			{
-				"buffer_size": 21,
+				"buffer_size": 20,
 				"line_ending": "Windows",
 				"name": "all:"
+			}
+		},
+		{
+			"file": "report/report.txt",
+			"settings":
+			{
+				"buffer_size": 6151,
+				"line_ending": "Windows"
 			}
 		}
 	],
@@ -197,11 +205,12 @@
 	},
 	"expanded_folders":
 	[
-		"/D/Users/Luke/projects/bpm",
-		"/D/Users/Luke/projects/bpm/report"
+		"/D/Users/Luke/projects/bpm"
 	],
 	"file_history":
 	[
+		"/D/Users/Luke/projects/bpm/bpm.sublime-project",
+		"/D/Users/Luke/projects/bpm/report/report.aux",
 		"/D/Users/Luke/Downloads/Chrome/index.coffee",
 		"/C/Windows/Logs/CBS/CBS.log",
 		"/C/Users/Luke/AppData/Local/Temp/Temp1_jhPrimeminer-T17v12.zip/README.txt",
@@ -325,6 +334,13 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"tabular",
+			"F",
+			"$",
+			"f",
+			"beat",
+			"out",
+			"log",
 			"DoS attack",
 			", error",
 			"error",
@@ -458,7 +474,7 @@
 	"groups":
 	[
 		{
-			"selected": 0,
+			"selected": 1,
 			"sheets":
 			[
 				{
@@ -467,15 +483,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 21,
+						"buffer_size": 20,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								15,
-								15
+								20,
+								20
 							]
 						],
 						"settings":
@@ -485,6 +501,34 @@
 						},
 						"translation.x": 0.0,
 						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "report/report.txt",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 6151,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								5808,
+								5808
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/MarkdownEditing/Markdown.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 1044.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
@@ -543,6 +587,10 @@
 		"height": 0.0,
 		"selected_items":
 		[
+			[
+				"report.txt",
+				"report\\report.txt"
+			],
 			[
 				"conc",
 				"heel\\conclusions.txt"
