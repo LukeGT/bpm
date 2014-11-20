@@ -556,7 +556,7 @@ process_file = (file) ->
 
             canvas = $('#frequencies canvas')[0]
             context = canvas.getContext '2d'
-            context.strokeStyle = 'rgba(255, 0, 0, 0.15)'
+            context.strokeStyle = 'rgba(255, 0, 0, 0.3)'
 
             for a in beat_positions
                 context.beginPath()
