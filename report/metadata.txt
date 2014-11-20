@@ -1,0 +1,16 @@
+---
+title: BPM Prediction in Music
+subtitle: Advanced and Parallel Algorithms (COMP4121) Major Assignment
+author: Luke Tsekouras, z3330983
+bigtitle: 1
+
+fontsize: 12pt
+geometry: margin=2cm
+documentclass: report
+
+graphics: 1
+tikz: shapes.geometric, arrows, positioning, calc
+pgfplots: 1.5
+caption: labelfont=bf,textfont=it
+subcaption: labelfont=bf,textfont=it
+---
